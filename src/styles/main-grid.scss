@@ -1,0 +1,32 @@
+/* Main grid layout for the app */
+.main-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr;
+  height: 100vh;
+  width: 100vw;
+}
+
+.map-section {
+  grid-column: 1;
+  grid-row: 1;
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.list-section {
+  grid-column: 2;
+  grid-row: 1;
+  background: #f8f8f8;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+  border-left: 1px solid #e0e0e0;
+}
+
+.list-placeholder {
+  color: #888;
+  font-size: 1.2rem;
+  text-align: center;
+  margin-top: 2rem;
+}

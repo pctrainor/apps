@@ -1,0 +1,40 @@
+// Prisma schema for the shared merchant-messages backend
+// Uses PostgreSQL — set DATABASE_URL in .env
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// A merchant who has installed the app
+model Merchant {
+  id          String    @id @default(cuid())
+  shopDomain  String    @unique         // e.g. "cool-store.myshopify.com"
+  shopName    String?                   // friendly name (optional)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+}
+
+/// An async message between two merchants
+model Message {
+  id        String    @id @default(cuid())
+  fromShop  String                     // sender domain
+  toShop    String                     // recipient domain
+  subject   String    @default("")
+  body      String
+  readAt    DateTime?                  // null = unread
+  createdAt DateTime  @default(now())
+
+  sender    Merchant  @relation("SentMessages",     fields: [fromShop], references: [shopDomain])
+  recipient Merchant  @relation("ReceivedMessages", fields: [toShop],   references: [shopDomain])
+
+  @@index([toShop, readAt])
+  @@index([fromShop])
+}

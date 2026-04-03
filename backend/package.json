@@ -1,0 +1,26 @@
+{
+  "name": "merchant-messages-backend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.13.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.2.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.13.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

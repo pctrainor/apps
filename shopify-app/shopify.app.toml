@@ -1,0 +1,28 @@
+name = "merchant-messages"
+client_id = "YOUR_SHOPIFY_CLIENT_ID"
+application_url = "https://YOUR_APP_URL"
+embedded = true
+handle = "merchant-messages"
+
+[build]
+include_config_on_deploy = true
+
+[access_scopes]
+scopes = "read_customers,read_orders"
+
+[auth]
+redirect_urls = [
+  "https://YOUR_APP_URL/auth/callback",
+  "https://YOUR_APP_URL/auth/shopify/callback",
+  "https://YOUR_APP_URL/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-04"
+
+  [[webhooks.subscriptions]]
+  topics = ["app/uninstalled"]
+  uri = "/webhooks"
+
+[pos]
+embedded = false

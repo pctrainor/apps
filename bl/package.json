@@ -1,0 +1,26 @@
+{
+  "name": "bl",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Browserless API use-case demos in vanilla Node.js (zero runtime dependencies)",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "doctor": "node index.js doctor",
+    "all": "node index.js all",
+    "screenshot": "node index.js screenshot",
+    "pdf": "node index.js pdf",
+    "content": "node index.js content",
+    "scrape": "node index.js scrape",
+    "function": "node index.js function",
+    "unblock": "node index.js unblock",
+    "performance": "node index.js performance",
+    "bql": "node index.js bql",
+    "puppeteer": "node index.js puppeteer"
+  },
+  "optionalDependencies": {
+    "puppeteer-core": "^23.0.0"
+  }
+}

@@ -55,7 +55,7 @@ npm scripts mirror the commands: `npm run doctor`, `npm run screenshot`, `npm ru
 | `performance` | `POST /performance` | Lighthouse scores + Core Web Vitals | `lighthouse.json` |
 | `puppeteer` | `wss://` connect | Real session control: clicks through three pages of a pager and collects results | `puppeteer-*.{png,json}` |
 | `replay` | `wss://?replay=true` | Records the session; watch it back in the dashboard under Session Replay | `replay-*.{png,json}` |
-| `profile` | `wss://?profile=<name>` | Writes state in one session, reads it in the next, with a no-profile control run | `profile-result.json` |
+| `profile` | `POST /profile` + `wss://?profile=<name>` | Creates a profile, saves state into it, reuses it in a new browser, with a no-profile control | `profile-result.json` |
 
 `replay` and `profile` both need `npm i puppeteer-core`.
 
@@ -113,8 +113,22 @@ node index.js bql --replay
 
 `profile=<name>` loads a saved snapshot of cookies, localStorage and IndexedDB before your code
 runs — log in once, reuse it everywhere. `sessionStorage` is deliberately excluded because it is
-tab-scoped. The `profile` demo runs three sessions (write, read-with-profile, read-without) so
-the result is a real comparison rather than a claim.
+tab-scoped.
+
+A profile has to be **created before it can be attached** — passing `?profile=` for a name that
+doesn't exist fails the WebSocket upgrade with a 404. The full flow, which the `profile` demo
+implements:
+
+1. `POST /profile` with a name → returns a WebSocket URL for a capture session.
+2. Connect to it and log in as normal.
+3. Send the `Browserless.saveProfile` CDP command — it snapshots cookies, localStorage and
+   IndexedDB under that name. It's a CDP method, not a BrowserQL mutation, so this step needs
+   Puppeteer, Playwright or raw CDP.
+4. From then on, `?profile=<name>` restores that state on any session. Changes made during a
+   session stay local to it and don't modify the saved profile.
+
+The demo then reads the state back with the profile attached, and once more with no profile, so
+the result is a comparison rather than a claim.
 
 ## Troubleshooting
 

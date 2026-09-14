@@ -12,10 +12,11 @@ async function loadPuppeteer() {
   try {
     return (await import('puppeteer-core')).default;
   } catch {
-    throw new Error(
-      'puppeteer-core is not installed.\n  Run: npm i puppeteer-core\n'
-        + '  (puppeteer-core ships no browser - Browserless is the browser)',
-    );
+    // Hint rather than a multi-line message: `all` prints only the first line
+    // of an error, but always prints the hint.
+    const err = new Error('puppeteer-core is not installed');
+    err.hint = 'Run: npm i puppeteer-core   (it ships no browser - Browserless is the browser)';
+    throw err;
   }
 }
 

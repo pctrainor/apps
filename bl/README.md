@@ -7,7 +7,7 @@ No TypeScript, no build step, no runtime dependencies — just `fetch` and the s
 
 ```bash
 cd ~/bl
-node index.js doctor      # creates .env on first run
+node index.js doctor
 ```
 
 Then paste your token into `.env`:
@@ -25,11 +25,11 @@ Requires Node 18+ (uses built-in `fetch`). Nothing to `npm install` unless you w
 ## Run
 
 ```bash
-node index.js                          # list the demos
-node index.js screenshot               # one demo, default target
+node index.js
+node index.js screenshot
 node index.js screenshot https://stripe.com
 node index.js scrape https://news.ycombinator.com --selector ".titleline > a"
-node index.js all                      # every demo, then build output/report.html
+node index.js all
 ```
 
 Everything lands in `output/`. After `all`, open `output/report.html` for a gallery of the
@@ -96,15 +96,24 @@ Each demo is self-contained: read `src/demos/scrape.js` and you have the whole p
 | --- | --- |
 | `401` / `403` | Token wrong, or the endpoint isn't on your plan (`/unblock` and BrowserQL are plan-gated) |
 | `404` on `bql` | Try `BROWSERLESS_BQL_PATH=/chrome/bql` |
+| `bql` timeout waiting for a DOM selector | That element isn't on the page — pass `--selector "body"` |
 | `429` | All your concurrent sessions are busy — run demos one at a time |
 | Timeouts | Raise `BROWSERLESS_TIMEOUT_MS`, or relax `gotoOptions.waitUntil` from `networkidle2` to `domcontentloaded` |
 | `puppeteer-core is not installed` | `npm i puppeteer-core` — it ships no browser, Browserless *is* the browser |
 
 Set `DEBUG=1` for full stack traces.
 
-## A note on verification
+## What has been verified live
 
-The request/response shapes here follow the Browserless v2 API. They were written without a
-live account to test against, so if your plan or region differs, `doctor` and the per-demo error
-hints will tell you exactly which call disagreed. The likeliest thing to need adjusting is
-`BROWSERLESS_BQL_PATH`, and `/unblock` if it isn't included in your plan.
+Run against a real token (SFO region, Node 24) — 7 of 9 demos passed on the first attempt:
+
+- `screenshot`, `pdf`, `content`, `scrape`, `function`, `unblock`, `performance` all worked.
+  Lighthouse took ~11s; everything else was 1-4s.
+- `content` showed 0 `.quote` elements in the raw HTML vs 10 after rendering.
+- BrowserQL is reachable at `/chromium/bql`, so that default is right.
+- `bql` initially failed on a bad selector (fixed since, but not re-run).
+- `puppeteer` was not exercised — it needs `npm i puppeteer-core` first.
+
+Worth knowing about BrowserQL: its `text` field *waits* for the selector and fails the whole
+mutation if the element never appears. Hacker News has no `<h1>`, so the demo now picks a
+selector per site, overridable with `--selector`.

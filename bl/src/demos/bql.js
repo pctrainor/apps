@@ -5,7 +5,10 @@ import { log, save, saveJson, reportArtifact, c, oneLine } from '../out.js';
 export const meta = {
   summary: 'BrowserQL - describe the whole session as one GraphQL mutation',
   useCase: 'One round trip instead of ten; the stealth layer is built in.',
-  flags: { '--selector <css>': 'element to read text from (default: picked per site)' },
+  flags: {
+    '--selector <css>': 'element to read text from (default: picked per site)',
+    '--replay': 'record the session for dashboard playback',
+  },
 };
 
 // `text` WAITS for its selector and fails the whole mutation if it never shows
@@ -41,9 +44,13 @@ export default async function run({ url, flags }) {
   log.note(`endpoint: ${cfg.baseUrl}${cfg.bqlPath}`);
   log.note(`navigate + read ${c.magenta(selector)} + screenshot, in a single round trip`);
 
+  // replay=true records the session the moment Browserless starts executing.
+  const opts = flags.replay ? { query: { replay: 'true' } } : {};
+  if (flags.replay) log.note('recording enabled - look under Session Replay afterwards');
+
   let result;
   try {
-    result = await bql(MUTATION, { url, selector });
+    result = await bql(MUTATION, { url, selector }, opts);
   } catch (err) {
     // The common failure is a selector the page does not have - say so plainly
     // instead of blaming the plan.

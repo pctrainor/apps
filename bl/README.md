@@ -1,6 +1,6 @@
 # bl — Browserless use-case demos
 
-Nine runnable demos of the [Browserless](https://www.browserless.io) API in plain Node.js.
+Eleven runnable demos of the [Browserless](https://www.browserless.io) API in plain Node.js.
 No TypeScript, no build step, no runtime dependencies — just `fetch` and the standard library.
 
 ## Setup
@@ -54,6 +54,10 @@ npm scripts mirror the commands: `npm run doctor`, `npm run screenshot`, `npm ru
 | `unblock` | `POST /unblock` | Stealth fetch returning HTML, session cookies and a screenshot in one call | `unblock-*.{html,png,json}` |
 | `performance` | `POST /performance` | Lighthouse scores + Core Web Vitals | `lighthouse.json` |
 | `puppeteer` | `wss://` connect | Real session control: clicks through three pages of a pager and collects results | `puppeteer-*.{png,json}` |
+| `replay` | `wss://?replay=true` | Records the session; watch it back in the dashboard under Session Replay | `replay-*.{png,json}` |
+| `profile` | `wss://?profile=<name>` | Writes state in one session, reads it in the next, with a no-profile control run | `profile-result.json` |
+
+`replay` and `profile` both need `npm i puppeteer-core`.
 
 The two worth reading first are **`content`** (it prints the raw-HTML vs rendered-DOM gap, which
 is the entire argument for a browser API) and **`pdf`** (HTML + CSS instead of a PDF library).
@@ -90,6 +94,28 @@ src/demos/*.js        one file per use case — each is readable on its own
 
 Each demo is self-contained: read `src/demos/scrape.js` and you have the whole pattern.
 
+## Recording and profiles
+
+Both are switched on with a query parameter on the connection URL — no SDK, no extra call.
+
+```
+wss://production-sfo.browserless.io?token=...&replay=true
+wss://production-sfo.browserless.io?token=...&profile=my-login
+```
+
+`replay=true` records the session; it uploads when the session **ends**, so disconnecting
+matters. Watch it at account.browserless.io under Session Replay. BrowserQL takes the same
+parameter, which the `bql` demo exposes:
+
+```bash
+node index.js bql --replay
+```
+
+`profile=<name>` loads a saved snapshot of cookies, localStorage and IndexedDB before your code
+runs — log in once, reuse it everywhere. `sessionStorage` is deliberately excluded because it is
+tab-scoped. The `profile` demo runs three sessions (write, read-with-profile, read-without) so
+the result is a real comparison rather than a claim.
+
 ## Troubleshooting
 
 | Symptom | Cause |
@@ -100,6 +126,8 @@ Each demo is self-contained: read `src/demos/scrape.js` and you have the whole p
 | `429` | All your concurrent sessions are busy — run demos one at a time |
 | Timeouts | Raise `BROWSERLESS_TIMEOUT_MS`, or relax `gotoOptions.waitUntil` from `networkidle2` to `domcontentloaded` |
 | `puppeteer-core is not installed` | `npm i puppeteer-core` — it ships no browser, Browserless *is* the browser |
+| Replay not in the dashboard | The session must end — check the demo disconnected. Recording is plan-gated |
+| `profile` reports "not persisted" | Authenticated Profiles are plan-gated; check Profiles in the dashboard |
 
 Set `DEBUG=1` for full stack traces.
 

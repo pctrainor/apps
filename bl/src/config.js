@@ -49,8 +49,18 @@ export function requireToken() {
   );
 }
 
-// wss:// endpoint used by puppeteer.connect()
-export function wsEndpoint(pathname = '') {
-  const ws = cfg.baseUrl.replace(/^http/, 'ws');
-  return `${ws}${pathname}?token=${encodeURIComponent(requireToken())}`;
+// wss:// endpoint used by puppeteer.connect(). Extra params are how Browserless
+// features get switched on: replay=true, profile=<name>, headless=false, ...
+export function wsEndpoint(pathname = '', params = {}) {
+  const url = new URL(cfg.baseUrl.replace(/^http/, 'ws') + pathname);
+  url.searchParams.set('token', requireToken());
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
+  }
+  return url.toString();
+}
+
+/** Same URL with the token blanked out, for printing. */
+export function redact(url) {
+  return String(url).replace(/(token=)[^&]+/, '$1<token>');
 }

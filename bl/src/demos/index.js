@@ -10,6 +10,8 @@ export const registry = {
   unblock: () => import('./unblock.js'),
   performance: () => import('./performance.js'),
   puppeteer: () => import('./puppeteer.js'),
+  replay: () => import('./replay.js'),
+  profile: () => import('./profile.js'),
 };
 
 // Order used by `node index.js all` - cheap and reliable first, slow last.
@@ -22,6 +24,8 @@ export const runAllOrder = [
   'bql',
   'unblock',
   'puppeteer',
+  'replay',
+  'profile',
   'performance',
 ];
 

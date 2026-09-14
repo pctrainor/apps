@@ -7,7 +7,7 @@ scaled to 0-100. Tiers come from the thresholds in config.
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
 from ..config import Config, DEFAULT_CONFIG
 from ..models import Candidate, Classification, Prefiltered, RawDoc
@@ -30,8 +30,15 @@ def score_company(
     prefilters: List[Prefiltered],
     classifications: List[Classification],
     config: Config = DEFAULT_CONFIG,
+    canonical: str = "",
+    aliases: Optional[List[str]] = None,
 ) -> Candidate:
-    """Aggregate one company's evidence into a Candidate."""
+    """Aggregate one resolved company's evidence into a Candidate.
+
+    `company` is the display name and `canonical` the entity key (see
+    pipeline.entities); callers that have already resolved the entity pass both,
+    otherwise `canonical` is derived from `company`.
+    """
     # Union of distinct matched phrases per category across all the company's docs.
     per_category: Dict[str, set] = {}
     for pf in prefilters:
@@ -65,6 +72,8 @@ def score_company(
         company=company,
         score=score,
         tier=_tier(score, config),
+        canonical=canonical,
+        aliases=sorted(set(aliases or [])),
         category_scores=category_scores,
         evidence=evidence,
         doc_ids=doc_ids,

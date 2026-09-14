@@ -68,13 +68,26 @@ class Classification:
 
 @dataclass
 class Candidate:
-    """A scored prospect, aggregated from one or more classified docs."""
+    """A scored prospect, aggregated from one or more classified docs.
 
-    company: str
+    `canonical` is the entity-resolution key (see pipeline.entities); it is the
+    storage identity so surface-form variants of one company merge. `company`
+    is the human-friendly display name chosen from the observed aliases.
+    """
+
+    company: str                      # display name
     score: int                        # 0-100
     tier: str                         # "A" / "B" / "C" / "watch"
+    canonical: str = ""               # entity key; defaults from company
+    aliases: List[str] = field(default_factory=list)    # observed surface forms
     category_scores: Dict[str, float] = field(default_factory=dict)
     evidence: List[str] = field(default_factory=list)   # supporting URLs
     doc_ids: List[str] = field(default_factory=list)
     first_seen: str = field(default_factory=_now)
     last_seen: str = field(default_factory=_now)
+
+    def __post_init__(self) -> None:
+        if not self.canonical:
+            # Lazy import avoids a models<->pipeline import cycle.
+            from .pipeline.entities import normalize_company
+            self.canonical = normalize_company(self.company)

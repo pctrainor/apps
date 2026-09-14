@@ -19,6 +19,7 @@ from ..config import Config, DEFAULT_CONFIG
 from ..sources.base import Source
 from ..store.db import Store
 from .prefilter import prefilter
+from .entities import choose_display, normalize_company
 from .scoring import score_company
 
 STAGES = ["ingest", "prefilter", "classify", "score"]
@@ -114,10 +115,13 @@ class JobRunner:
 
     def _score(self) -> None:
         self.store.set_state("score", "running")
-        # Group relevant docs by company.
-        by_company_docs: Dict[str, list] = defaultdict(list)
-        by_company_pf: Dict[str, list] = defaultdict(list)
-        by_company_cl: Dict[str, list] = defaultdict(list)
+        # Group relevant docs by *resolved* company entity so that surface-form
+        # variants across sources (e.g. "tessellate-ai" vs "Tessellate AI")
+        # merge into one candidate instead of several weak duplicates.
+        by_docs: Dict[str, list] = defaultdict(list)
+        by_pf: Dict[str, list] = defaultdict(list)
+        by_cl: Dict[str, list] = defaultdict(list)
+        aliases: Dict[str, set] = defaultdict(set)
 
         relevant = list(self.store.iter_relevant())
         pf_index = {pf.doc_id: pf for pf in self.store.iter_survivors()}
@@ -126,17 +130,20 @@ class JobRunner:
             doc = self.store.get_raw_doc(cl.doc_id)
             if doc is None:
                 continue
-            company = cl.company or doc.company or "unknown"
-            by_company_docs[company].append(doc)
-            by_company_cl[company].append(cl)
+            raw_name = cl.company or doc.company or "unknown"
+            key = normalize_company(raw_name) or "unknown"
+            by_docs[key].append(doc)
+            by_cl[key].append(cl)
+            aliases[key].add(raw_name)
             if cl.doc_id in pf_index:
-                by_company_pf[company].append(pf_index[cl.doc_id])
+                by_pf[key].append(pf_index[cl.doc_id])
 
         made = 0
-        for company, docs in by_company_docs.items():
+        for key, docs in by_docs.items():
+            display = choose_display(aliases[key]) or key
             cand = score_company(
-                company, docs, by_company_pf.get(company, []),
-                by_company_cl.get(company, []), self.config,
+                display, docs, by_pf.get(key, []), by_cl.get(key, []),
+                self.config, canonical=key, aliases=list(aliases[key]),
             )
             self.store.upsert_candidate(cand)
             made += 1

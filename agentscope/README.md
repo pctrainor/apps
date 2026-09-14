@@ -31,8 +31,10 @@ people's sites. The `sources/` skeletons all read published/archived material
    before any model is invoked.
 3. **Classify** — survivors are labelled by a swappable backend:
    `keyword` (free, default), `ollama` (local LLM), or `api` (hosted LLM).
-4. **Score** — signals are aggregated per company into a 0–100 score and an
-   A/B/C/watch tier, using the weights in `config.py`.
+4. **Score** — surface-form company names are resolved to one entity (so
+   `tessellate-ai` from GitHub and `Tessellate AI` from a job post merge), then
+   signals are aggregated per company into a 0–100 score and an A/B/C/watch
+   tier, using the weights in `config.py`.
 
 Everything persists to a local SQLite store after each stage, so runs are
 resumable and idempotent.
@@ -61,6 +63,22 @@ python -m agentscope --help
 
 Point at a different database with `--db path/to.db` (default `agentscope.db`).
 
+### Live sources
+
+Beyond the offline demo, the GitHub source is implemented (public search API +
+READMEs, standard-library only). It reads public data only — it never probes a
+running system.
+
+```bash
+python -m agentscope run --source github --query "agent framework in:name,description,readme"
+python -m agentscope run --source github --max-results 50 --no-readme   # faster
+python -m agentscope top --tier A
+```
+
+Set `GITHUB_TOKEN` in the environment to lift the unauthenticated rate limit.
+`jobboard` and `commoncrawl` are documented skeletons and will report that they
+are not yet implemented.
+
 ## Layout
 
 ```
@@ -72,11 +90,13 @@ agentscope/
   sources/
     base.py              # Source interface
     demo.py              # offline fixtures (zero setup)
-    real_stubs.py        # JobBoard / GitHub / CommonCrawl skeletons
+    github.py            # real public GitHub source (search API + READMEs)
+    real_stubs.py        # JobBoard / CommonCrawl skeletons
   pipeline/
     prefilter.py         # stage 2: keyword cull
     classify (../classify/classifier.py)  # stage 4 backends
-    scoring.py           # stage 5: 0–100 score per company
+    entities.py          # company-entity resolution (dedupe across sources)
+    scoring.py           # stage 5: 0–100 score per resolved company
     jobs.py              # orchestrator with start/pause/stop control
   tests/                 # stdlib smoke tests
 ```
@@ -86,8 +106,12 @@ agentscope/
 Designed so the parts you'll want to change are swappable config, not rewrites:
 
 - **New source** — subclass `sources.base.Source`, implement `fetch()` to yield
-  `RawDoc`s from public data, and register it in `cli._SOURCES`. Skeletons for
-  job boards, GitHub, and Common Crawl are in `sources/real_stubs.py`.
+  `RawDoc`s from public data, and wire it into `cli._make_source`. `sources/
+  github.py` is a complete example; job boards and Common Crawl are skeletons in
+  `sources/real_stubs.py`.
+- **Entity resolution** — company de-duplication lives in `pipeline.entities`
+  (`normalize_company`, `choose_display`); it's deterministic and conservative,
+  so fuzzier matching can layer on without changing callers.
 - **New classifier** — subclass `classify.classifier.Classifier`, return a
   `Classification`, and add it to the `_BACKENDS` factory. Keyword / Ollama /
   API backends are provided; the API backend is a one-line swap to Bedrock.
@@ -107,7 +131,9 @@ python -m unittest discover -s tests    # zero third-party deps
 
 ## Roadmap
 
-- Implement the real sources (`real_stubs.py`) against public APIs/archives.
-- Company-entity resolution (dedupe across sources).
-- Move storage to Postgres and classification to Bedrock as a config change.
-- SaaS surface on top of the same funnel.
+- [x] GitHub public source (search API + READMEs).
+- [x] Company-entity resolution (dedupe across sources).
+- [ ] Remaining real sources: job boards and Common Crawl (`real_stubs.py`).
+- [ ] Fuzzy entity matching (aliases, domains) beyond the deterministic pass.
+- [ ] Move storage to Postgres and classification to Bedrock as a config change.
+- [ ] SaaS surface on top of the same funnel.

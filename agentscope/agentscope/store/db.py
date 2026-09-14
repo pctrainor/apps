@@ -47,9 +47,11 @@ CREATE TABLE IF NOT EXISTS classifications (
 );
 
 CREATE TABLE IF NOT EXISTS candidates (
-    company         TEXT PRIMARY KEY,
+    canonical       TEXT PRIMARY KEY,
+    company         TEXT,
     score           INTEGER NOT NULL,
     tier            TEXT,
+    aliases         TEXT,
     category_scores TEXT,
     evidence        TEXT,
     doc_ids         TEXT,
@@ -176,17 +178,19 @@ class Store:
         with self._tx() as c:
             c.execute(
                 """INSERT INTO candidates
-                   (company, score, tier, category_scores, evidence, doc_ids,
-                    first_seen, last_seen)
-                   VALUES (?,?,?,?,?,?,?,?)
-                   ON CONFLICT(company) DO UPDATE SET
-                     score=excluded.score, tier=excluded.tier,
+                   (canonical, company, score, tier, aliases, category_scores,
+                    evidence, doc_ids, first_seen, last_seen)
+                   VALUES (?,?,?,?,?,?,?,?,?,?)
+                   ON CONFLICT(canonical) DO UPDATE SET
+                     company=excluded.company, score=excluded.score,
+                     tier=excluded.tier, aliases=excluded.aliases,
                      category_scores=excluded.category_scores,
                      evidence=excluded.evidence, doc_ids=excluded.doc_ids,
                      last_seen=excluded.last_seen""",
-                (cand.company, cand.score, cand.tier,
-                 json.dumps(cand.category_scores), json.dumps(cand.evidence),
-                 json.dumps(cand.doc_ids), cand.first_seen, cand.last_seen),
+                (cand.canonical, cand.company, cand.score, cand.tier,
+                 json.dumps(cand.aliases), json.dumps(cand.category_scores),
+                 json.dumps(cand.evidence), json.dumps(cand.doc_ids),
+                 cand.first_seen, cand.last_seen),
             )
 
     def top_candidates(self, limit: int = 20, min_score: int = 0) -> List[Candidate]:
@@ -198,6 +202,7 @@ class Store:
         for r in rows:
             out.append(Candidate(
                 company=r["company"], score=r["score"], tier=r["tier"],
+                canonical=r["canonical"], aliases=json.loads(r["aliases"] or "[]"),
                 category_scores=json.loads(r["category_scores"] or "{}"),
                 evidence=json.loads(r["evidence"] or "[]"),
                 doc_ids=json.loads(r["doc_ids"] or "[]"),

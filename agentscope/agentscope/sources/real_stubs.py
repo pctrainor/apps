@@ -38,26 +38,6 @@ class JobBoardSource(Source):
         )
 
 
-class GitHubSource(Source):
-    """Public repositories and their READMEs via the GitHub search API.
-
-    Real impl: search public repos for agent frameworks/keywords, map repo +
-    README to RawDoc(company=owner/org). Public data only; honour API limits.
-    """
-
-    name = "github"
-
-    def __init__(self, query: str = "ai agent framework", token: str | None = None) -> None:
-        self.query = query
-        self.token = token
-
-    def fetch(self) -> Iterator[RawDoc]:
-        raise NotImplementedError(
-            "GitHubSource is a skeleton. Use the public GitHub search API and "
-            "yield RawDocs from repo metadata + README text."
-        )
-
-
 class CommonCrawlSource(Source):
     """Company/product pages harvested from Common Crawl.
 

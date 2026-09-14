@@ -24,24 +24,29 @@ from .config import DEFAULT_CONFIG, Config
 from .pipeline.jobs import STAGES, JobRunner
 from .sources.base import Source
 from .sources.demo import DemoSource
-from .sources.real_stubs import CommonCrawlSource, GitHubSource, JobBoardSource
+from .sources.github import GitHubSource
+from .sources.real_stubs import CommonCrawlSource, JobBoardSource
 from .store.db import Store
 
-_SOURCES = {
-    "demo": lambda: DemoSource(),
-    "jobboard": lambda: JobBoardSource(),
-    "github": lambda: GitHubSource(),
-    "commoncrawl": lambda: CommonCrawlSource(),
-}
+SOURCE_NAMES = ["demo", "github", "jobboard", "commoncrawl"]
 
 _TIER_MARK = {"A": "***", "B": "** ", "C": "*  ", "watch": "   "}
 
 
-def _make_source(name: str) -> Source:
-    try:
-        return _SOURCES[name]()
-    except KeyError:
-        raise SystemExit(f"unknown source {name!r}; choose from {sorted(_SOURCES)}")
+def _make_source(name: str, args: argparse.Namespace) -> Source:
+    if name == "demo":
+        return DemoSource()
+    if name == "github":
+        return GitHubSource(
+            query=args.query or "ai agent framework in:name,description,readme",
+            max_results=args.max_results,
+            fetch_readme=not args.no_readme,
+        )
+    if name == "jobboard":
+        return JobBoardSource(query=args.query or "ai agent")
+    if name == "commoncrawl":
+        return CommonCrawlSource()
+    raise SystemExit(f"unknown source {name!r}; choose from {SOURCE_NAMES}")
 
 
 def _print_progress(stage: str, msg: str) -> None:
@@ -51,7 +56,7 @@ def _print_progress(stage: str, msg: str) -> None:
 def cmd_run(args: argparse.Namespace) -> int:
     store = Store(args.db)
     config = DEFAULT_CONFIG
-    source = _make_source(args.source)
+    source = _make_source(args.source, args)
     classifier_kwargs = {"config": config}
     if args.model:
         classifier_kwargs["model"] = args.model
@@ -72,6 +77,9 @@ def cmd_run(args: argparse.Namespace) -> int:
     except NotImplementedError as exc:
         store.close()
         raise SystemExit(f"source '{args.source}' is not implemented yet: {exc}")
+    except (RuntimeError, OSError) as exc:
+        store.close()
+        raise SystemExit(f"source '{args.source}' failed: {exc}")
 
     counts = store.counts()
     print(f"\nFunnel: {counts['raw_docs']} ingested "
@@ -173,7 +181,13 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command")
 
     r = sub.add_parser("run", help="run the pipeline")
-    r.add_argument("--source", default="demo")
+    r.add_argument("--source", default="demo", choices=SOURCE_NAMES)
+    r.add_argument("--query", default=None,
+                   help="search query for network sources (github/jobboard)")
+    r.add_argument("--max-results", type=int, default=30,
+                   help="cap results for network sources (default: %(default)s)")
+    r.add_argument("--no-readme", action="store_true",
+                   help="github: skip README fetches (faster, fewer API calls)")
     r.add_argument("--classifier", default="keyword",
                    choices=["keyword", "ollama", "api"])
     r.add_argument("--model", default=None, help="model id for ollama/api backends")

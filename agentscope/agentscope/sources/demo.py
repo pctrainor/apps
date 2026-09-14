@@ -92,16 +92,18 @@ _FIXTURES = [
      "Breaking news, culture, and opinion. Subscribe for unlimited articles and "
      "our weekly newsletter."),
 
-    ("Tessellate AI", "github", "https://example.com/tessellate/agents",
-     "tessellate/agents",
+    # Owner login form on purpose: entity resolution merges this GitHub-style
+    # name with "Tessellate AI" from the job post below into one candidate.
+    ("tessellate-ai", "github", "https://example.com/tessellate/agents",
+     "tessellate-ai/agents",
      "Multi-agent framework with autogen-style orchestration. Function calling, "
      "tool use, and a growing evals harness. Used in production by enterprise "
      "customers; observability and monitoring built in."),
 
     ("Tessellate AI", "jobboard", "https://example.com/jobs/tessellate-eng",
      "Applied AI Engineer",
-     "We're hiring to scale our agent platform. Own reliability, guardrails, and "
-     "the evaluation harness for customer-facing agents in production."),
+     "We're hiring to scale our multi-agent platform. Own reliability, guardrails, "
+     "and the evaluation harness for our customer-facing ai agents in production."),
 
     ("Fig Analytics", "companypage", "https://example.com/fig/dashboard",
      "Fig Analytics Dashboards",

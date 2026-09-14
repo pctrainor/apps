@@ -1,0 +1,6 @@
+node_modules
+.env
+data/downloads/
+data/runs/
+data/state.json
+data/*.html

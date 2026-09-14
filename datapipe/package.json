@@ -1,0 +1,20 @@
+{
+  "name": "datapipe",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Hourly open-data pipeline: discover, download, profile, test, hypothesise, verify, report",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "run": "node run.js run",
+    "offline": "node run.js run --fixture",
+    "digest": "node run.js digest",
+    "dashboard": "node run.js dashboard",
+    "doctor": "node run.js doctor"
+  },
+  "optionalDependencies": {
+    "@anthropic-ai/bedrock-sdk": "^0.33.5"
+  }
+}

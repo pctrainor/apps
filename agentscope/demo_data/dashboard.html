@@ -1,0 +1,184 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>AgentScope Prospects</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"><style>
+:root{
+  --paper:#eef1f1; --surface:#ffffff; --surface-2:#e5eaea; --inset:#f6f8f8;
+  --ink:#13201f; --muted:#586a6a; --faint:#8697971a; --line:#d5dedd;
+  --accent:#0a6b70; --accent-soft:#0a6b7015; --link:#0a6b70;
+  --tier-a:#0a6b70; --tier-b:#2b8a83; --tier-c:#b07d1a; --tier-watch:#79868a;
+  --track:#dbe3e2;
+  --shadow:0 1px 2px rgba(19,32,31,.06),0 8px 24px -14px rgba(19,32,31,.18);
+}
+:root:not([data-theme="light"]){ }
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0c1413; --surface:#111c1b; --surface-2:#182624; --inset:#0e1817;
+    --ink:#e8efee; --muted:#93a5a4; --line:#243532;
+    --accent:#38b6ad; --accent-soft:#38b6ad1f; --link:#5fcfc5;
+    --tier-a:#38b6ad; --tier-b:#4fb8a0; --tier-c:#d3a24a; --tier-watch:#8a999a;
+    --track:#22322f;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -16px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0c1413; --surface:#111c1b; --surface-2:#182624; --inset:#0e1817;
+  --ink:#e8efee; --muted:#93a5a4; --line:#243532;
+  --accent:#38b6ad; --accent-soft:#38b6ad1f; --link:#5fcfc5;
+  --tier-a:#38b6ad; --tier-b:#4fb8a0; --tier-c:#d3a24a; --tier-watch:#8a999a;
+  --track:#22322f;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -16px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:960px; margin:0 auto; padding-inline:20px; padding-block:40px 64px;}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  font-variant-numeric:tabular-nums;}
+a{color:var(--link); text-decoration:none;}
+a:hover{text-decoration:underline;}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:3px;}
+
+/* header */
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent); margin:0 0 10px;}
+h1{font-size:clamp(30px,5vw,44px); line-height:1.04; letter-spacing:-.02em;
+  margin:0 0 12px; text-wrap:balance; font-weight:600;}
+.lede{font-size:17px; color:var(--muted); max-width:62ch; margin:0;}
+.provenance{margin-top:18px; display:flex; flex-wrap:wrap; gap:8px 10px;
+  font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--muted);}
+.chip{border:1px solid var(--line); border-radius:999px; padding:3px 10px;
+  background:var(--surface); white-space:nowrap;}
+
+/* section heading */
+.sec{margin-top:44px;}
+.sec-h{display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+  margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:8px;}
+.sec-h h2{font-size:14px; letter-spacing:.14em; text-transform:uppercase;
+  margin:0; color:var(--muted); font-weight:600; font-family:"IBM Plex Mono",monospace;}
+.sec-h .note{font-size:12px; color:var(--muted); font-family:"IBM Plex Mono",monospace;}
+
+/* funnel */
+.funnel{display:grid; grid-template-columns:repeat(4,1fr); gap:12px;}
+.stage{background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  padding:16px; box-shadow:var(--shadow); position:relative;}
+.stage .k{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--muted);}
+.stage .v{font-family:"IBM Plex Mono",monospace; font-size:32px; font-weight:600;
+  line-height:1.1; margin-top:4px; letter-spacing:-.02em;}
+.stage .d{font-size:12px; color:var(--muted); margin-top:2px;}
+.stage .bar{height:4px; border-radius:2px; background:var(--track); margin-top:12px; overflow:hidden;}
+.stage .bar > i{display:block; height:100%; background:var(--accent); border-radius:2px;}
+
+/* tier stat row */
+.tiers{display:flex; flex-wrap:wrap; gap:10px; margin-top:16px;}
+.tierstat{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted);
+  font-family:"IBM Plex Mono",monospace;}
+.dot{width:10px; height:10px; border-radius:3px; display:inline-block;}
+
+/* candidate cards */
+.cards{display:flex; flex-direction:column; gap:10px;}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  padding:16px 18px; box-shadow:var(--shadow); display:grid;
+  grid-template-columns:auto 1fr auto; gap:6px 18px; align-items:center;}
+.rank{font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--muted); width:2ch;}
+.co{min-width:0;}
+.co .name{font-size:18px; font-weight:600; letter-spacing:-.01em;}
+.co .meta{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--muted);
+  margin-top:2px;}
+.score-wrap{display:flex; flex-direction:column; align-items:flex-end; gap:6px; min-width:132px;}
+.score-line{display:flex; align-items:baseline; gap:8px;}
+.score{font-family:"IBM Plex Mono",monospace; font-size:30px; font-weight:600;
+  line-height:1; letter-spacing:-.02em;}
+.tier{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase; color:#fff; padding:3px 8px;
+  border-radius:6px;}
+.strack{width:120px; height:6px; border-radius:3px; background:var(--track); overflow:hidden;}
+.strack > i{display:block; height:100%; border-radius:3px;}
+
+/* signals sub-grid spanning full width under name */
+.signals{grid-column:1 / -1; display:grid;
+  grid-template-columns:repeat(4,1fr); gap:8px 16px; margin-top:6px;}
+.sig{display:flex; align-items:center; gap:8px;}
+.sig .lab{font-family:"IBM Plex Mono",monospace; font-size:10px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted); width:46px; flex:none;}
+.sig .t{flex:1; height:5px; border-radius:3px; background:var(--track); overflow:hidden;}
+.sig .t > i{display:block; height:100%; background:var(--accent); border-radius:3px;}
+.sig .n{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--muted);
+  width:30px; text-align:right; flex:none;}
+.evi{grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:8px;
+  padding-top:8px; border-top:1px dashed var(--line);}
+.evi a{font-family:"IBM Plex Mono",monospace; font-size:12px; display:inline-flex; gap:6px;}
+.evi a::before{content:"↳"; color:var(--muted);}
+
+/* culled */
+details.culled{background:var(--inset); border:1px solid var(--line); border-radius:12px;
+  padding:4px 18px; margin-top:16px;}
+details.culled summary{cursor:pointer; padding:12px 0; font-family:"IBM Plex Mono",monospace;
+  font-size:13px; color:var(--ink); list-style:none;}
+details.culled summary::-webkit-details-marker{display:none;}
+details.culled summary .caret{color:var(--accent); transition:transform .15s ease; display:inline-block;}
+details.culled[open] summary .caret{transform:rotate(90deg);}
+.culled ul{list-style:none; margin:0 0 12px; padding:0; display:flex; flex-direction:column; gap:2px;}
+.culled li{display:flex; justify-content:space-between; gap:12px; padding:6px 0;
+  border-top:1px solid var(--line); font-size:13px;}
+.culled li .why{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--muted);
+  white-space:nowrap;}
+
+/* methodology footer */
+.method{margin-top:44px; padding:20px; background:var(--surface); border:1px solid var(--line);
+  border-radius:12px; box-shadow:var(--shadow);}
+.method h3{margin:0 0 8px; font-size:13px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--muted); font-family:"IBM Plex Mono",monospace;}
+.method p{margin:0 0 10px; font-size:14px; color:var(--muted); max-width:70ch;}
+.method p:last-child{margin-bottom:0;}
+.method b{color:var(--ink); font-weight:600;}
+
+@media (max-width:640px){
+  .funnel{grid-template-columns:repeat(2,1fr);}
+  .card{grid-template-columns:auto 1fr; }
+  .score-wrap{grid-column:2; align-items:flex-start; margin-top:4px;}
+  .strack{width:100%;}
+  .signals{grid-template-columns:repeat(2,1fr);}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;}}
+</style></head><body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">AgentScope · lead qualification</p>
+    <h1>Companies shipping AI agents, ranked by prospect signal</h1>
+    <p class="lede">A live pass of the AgentScope funnel over 33 public GitHub
+      repositories &mdash; keyword prefilter, classification, entity resolution and
+      0&ndash;100 scoring &mdash; surfacing the strongest fits for agent-testing and
+      AI-safety services.</p>
+    <div class="provenance"><span class="chip">crawled 2026-09-14</span><span class="chip">source: github_search</span><span class="chip">4 search queries</span><span class="chip">public signal only</span></div>
+  </header>
+
+  <section class="sec">
+    <div class="sec-h"><h2>The funnel</h2>
+      <span class="note">15 of 33 dropped before scoring</span></div>
+    <div class="funnel"><div class="stage"><div class="k">Crawled</div><div class="v">33</div><div class="d">public repos ingested</div><div class="bar"><i style="width:100%"></i></div></div><div class="stage"><div class="k">Survived</div><div class="v">18</div><div class="d">cleared keyword prefilter</div><div class="bar"><i style="width:55%"></i></div></div><div class="stage"><div class="k">Relevant</div><div class="v">18</div><div class="d">classified as on-topic</div><div class="bar"><i style="width:55%"></i></div></div><div class="stage"><div class="k">Candidates</div><div class="v">15</div><div class="d">companies scored</div><div class="bar"><i style="width:45%"></i></div></div></div>
+    <div class="tiers"><span class="tierstat"><span class="dot" style="background:var(--tier-a)"></span>Tier A · 0</span><span class="tierstat"><span class="dot" style="background:var(--tier-b)"></span>Tier B · 0</span><span class="tierstat"><span class="dot" style="background:var(--tier-c)"></span>Tier C · 10</span><span class="tierstat"><span class="dot" style="background:var(--tier-watch)"></span>Watch · 5</span></div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-h"><h2>Ranked candidates</h2>
+      <span class="note">score = weighted agent · pain · scale · hiring signal</span></div>
+    <div class="cards"><div class="card"><div class="rank mono">01</div><div class="co"><div class="name">microsoft</div><div class="meta">2 repos · 60,983★ · Python</div></div><div class="score-wrap"><div class="score-line"><span class="score">37</span><span class="tier" style="background:var(--tier-c)">C</span></div><div class="strack"><i style="width:37%;background:var(--tier-c)"></i></div></div><div class="signals"><div class="sig"><span class="lab">Agent</span><span class="t"><i style="width:100%"></i></span><span class="n">1.00</span></div><div class="sig"><span class="lab">Pain</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Scale</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Hiring</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div></div><div class="evi"><a href="https://github.com/microsoft/autogen" target="_blank" rel="noopener">microsoft/autogen</a><a href="https://github.com/microsoft/agent-framework" target="_blank" rel="noopener">microsoft/agent-framework</a></div></div><div class="card"><div class="rank mono">02</div><div class="co"><div class="name">HKUDS</div><div class="meta">2 repos · 48,154★ · Python</div></div><div class="score-wrap"><div class="score-line"><span class="score">37</span><span class="tier" style="background:var(--tier-c)">C</span></div><div class="strack"><i style="width:37%;background:var(--tier-c)"></i></div></div><div class="signals"><div class="sig"><span class="lab">Agent</span><span class="t"><i style="width:100%"></i></span><span class="n">1.00</span></div><div class="sig"><span class="lab">Pain</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Scale</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Hiring</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div></div><div class="evi"><a href="https://github.com/HKUDS/nanobot" target="_blank" rel="noopener">HKUDS/nanobot</a><a href="https://github.com/HKUDS/DeepCode" target="_blank" rel="noopener">HKUDS/DeepCode</a></div></div><div class="card"><div class="rank mono">03</div><div class="co"><div class="name">cft0808</div><div class="meta">1 repo · 16,877★ · Python</div></div><div class="score-wrap"><div class="score-line"><span class="score">37</span><span class="tier" style="background:var(--tier-c)">C</span></div><div class="strack"><i style="width:37%;background:var(--tier-c)"></i></div></div><div class="signals"><div class="sig"><span class="lab">Agent</span><span class="t"><i style="width:100%"></i></span><span class="n">1.00</span></div><div class="sig"><span class="lab">Pain</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Scale</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Hiring</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div></div><div class="evi"><a href="https://github.com/cft0808/edict" target="_blank" rel="noopener">cft0808/edict</a></div></div><div class="card"><div class="rank mono">04</div><div class="co"><div class="name">kyegomez</div><div class="meta">1 repo · 7,170★ · Python</div></div><div class="score-wrap"><div class="score-line"><span class="score">37</span><span class="tier" style="background:var(--tier-c)">C</span></div><div class="strack"><i style="width:37%;background:var(--tier-c)"></i></div></div><div class="signals"><div class="sig"><span class="lab">Agent</span><span class="t"><i style="width:100%"></i></span><span class="n">1.00</span></div><div class="sig"><span class="lab">Pain</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Scale</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Hiring</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div></div><div class="evi"><a href="https://github.com/kyegomez/swarms" target="_blank" rel="noopener">kyegomez/swarms</a></div></div><div class="card"><div class="rank mono">05</div><div class="co"><div class="name">SolaceLabs</div><div class="meta">1 repo · 4,929★ · Python</div></div><div class="score-wrap"><div class="score-line"><span class="score">37</span><span class="tier" style="background:var(--tier-c)">C</span></div><div class="strack"><i style="width:37%;background:var(--tier-c)"></i></div></div><div class="signals"><div class="sig"><span class="lab">Agent</span><span class="t"><i style="width:100%"></i></span><span class="n">1.00</span></div><div class="sig"><span class="lab">Pain</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Scale</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Hiring</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div></div><div class="evi"><a href="https://github.com/SolaceLabs/solace-agent-mesh" target="_blank" rel="noopener">SolaceLabs/solace-agent-mesh</a></div></div><div class="card"><div class="rank mono">06</div><div class="co"><div class="name">ageerle</div><div class="meta">1 repo · 5,694★ · Java</div></div><div class="score-wrap"><div class="score-line"><span class="score">35</span><span class="tier" style="background:var(--tier-c)">C</span></div><div class="strack"><i style="width:35%;background:var(--tier-c)"></i></div></div><div class="signals"><div class="sig"><span class="lab">Agent</span><span class="t"><i style="width:75%"></i></span><span class="n">0.75</span></div><div class="sig"><span class="lab">Pain</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Scale</span><span class="t"><i style="width:33%"></i></span><span class="n">0.33</span></div><div class="sig"><span class="lab">Hiring</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div></div><div class="evi"><a href="https://github.com/ageerle/ruoyi-ai" target="_blank" rel="noopener">ageerle/ruoyi-ai</a></div></div><div class="card"><div class="rank mono">07</div><div class="co"><div class="name">crewAIInc</div><div class="meta">1 repo · 58,545★ · Python</div></div><div class="score-wrap"><div class="score-line"><span class="score">28</span><span class="tier" style="background:var(--tier-c)">C</span></div><div class="strack"><i style="width:28%;background:var(--tier-c)"></i></div></div><div class="signals"><div class="sig"><span class="lab">Agent</span><span class="t"><i style="width:75%"></i></span><span class="n">0.75</span></div><div class="sig"><span class="lab">Pain</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Scale</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Hiring</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div></div><div class="evi"><a href="https://github.com/crewAIInc/crewAI" target="_blank" rel="noopener">crewAIInc/crewAI</a></div></div><div class="card"><div class="rank mono">08</div><div class="co"><div class="name">deepset-ai</div><div class="meta">1 repo · 26,510★ · Python</div></div><div class="score-wrap"><div class="score-line"><span class="score">28</span><span class="tier" style="background:var(--tier-c)">C</span></div><div class="strack"><i style="width:28%;background:var(--tier-c)"></i></div></div><div class="signals"><div class="sig"><span class="lab">Agent</span><span class="t"><i style="width:75%"></i></span><span class="n">0.75</span></div><div class="sig"><span class="lab">Pain</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Scale</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Hiring</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div></div><div class="evi"><a href="https://github.com/deepset-ai/haystack" target="_blank" rel="noopener">deepset-ai/haystack</a></div></div><div class="card"><div class="rank mono">09</div><div class="co"><div class="name">Yeachan-Heo</div><div class="meta">1 repo · 39,156★ · TypeScript</div></div><div class="score-wrap"><div class="score-line"><span class="score">28</span><span class="tier" style="background:var(--tier-c)">C</span></div><div class="strack"><i style="width:28%;background:var(--tier-c)"></i></div></div><div class="signals"><div class="sig"><span class="lab">Agent</span><span class="t"><i style="width:75%"></i></span><span class="n">0.75</span></div><div class="sig"><span class="lab">Pain</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Scale</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Hiring</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div></div><div class="evi"><a href="https://github.com/Yeachan-Heo/oh-my-claudecode" target="_blank" rel="noopener">Yeachan-Heo/oh-my-claudecode</a></div></div><div class="card"><div class="rank mono">10</div><div class="co"><div class="name">openai</div><div class="meta">2 repos · 29,432★ · Python</div></div><div class="score-wrap"><div class="score-line"><span class="score">27</span><span class="tier" style="background:var(--tier-c)">C</span></div><div class="strack"><i style="width:27%;background:var(--tier-c)"></i></div></div><div class="signals"><div class="sig"><span class="lab">Agent</span><span class="t"><i style="width:75%"></i></span><span class="n">0.75</span></div><div class="sig"><span class="lab">Pain</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Scale</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Hiring</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div></div><div class="evi"><a href="https://github.com/openai/openai-agents-python" target="_blank" rel="noopener">openai/openai-agents-python</a><a href="https://github.com/openai/swarm" target="_blank" rel="noopener">openai/swarm</a></div></div><div class="card"><div class="rank mono">11</div><div class="co"><div class="name">FoundationAgents</div><div class="meta">1 repo · 70,389★ · Python</div></div><div class="score-wrap"><div class="score-line"><span class="score">18</span><span class="tier" style="background:var(--tier-watch)">watch</span></div><div class="strack"><i style="width:18%;background:var(--tier-watch)"></i></div></div><div class="signals"><div class="sig"><span class="lab">Agent</span><span class="t"><i style="width:50%"></i></span><span class="n">0.50</span></div><div class="sig"><span class="lab">Pain</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Scale</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Hiring</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div></div><div class="evi"><a href="https://github.com/FoundationAgents/MetaGPT" target="_blank" rel="noopener">FoundationAgents/MetaGPT</a></div></div><div class="card"><div class="rank mono">12</div><div class="co"><div class="name">VRSEN</div><div class="meta">1 repo · 4,560★ · Python</div></div><div class="score-wrap"><div class="score-line"><span class="score">18</span><span class="tier" style="background:var(--tier-watch)">watch</span></div><div class="strack"><i style="width:18%;background:var(--tier-watch)"></i></div></div><div class="signals"><div class="sig"><span class="lab">Agent</span><span class="t"><i style="width:50%"></i></span><span class="n">0.50</span></div><div class="sig"><span class="lab">Pain</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Scale</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Hiring</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div></div><div class="evi"><a href="https://github.com/VRSEN/agency-swarm" target="_blank" rel="noopener">VRSEN/agency-swarm</a></div></div><div class="card"><div class="rank mono">13</div><div class="co"><div class="name">golutra</div><div class="meta">1 repo · 3,840★ · Rust</div></div><div class="score-wrap"><div class="score-line"><span class="score">18</span><span class="tier" style="background:var(--tier-watch)">watch</span></div><div class="strack"><i style="width:18%;background:var(--tier-watch)"></i></div></div><div class="signals"><div class="sig"><span class="lab">Agent</span><span class="t"><i style="width:50%"></i></span><span class="n">0.50</span></div><div class="sig"><span class="lab">Pain</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Scale</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Hiring</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div></div><div class="evi"><a href="https://github.com/golutra/golutra" target="_blank" rel="noopener">golutra/golutra</a></div></div><div class="card"><div class="rank mono">14</div><div class="co"><div class="name">infiniflow</div><div class="meta">1 repo · 90,688★ · Go</div></div><div class="score-wrap"><div class="score-line"><span class="score">18</span><span class="tier" style="background:var(--tier-watch)">watch</span></div><div class="strack"><i style="width:18%;background:var(--tier-watch)"></i></div></div><div class="signals"><div class="sig"><span class="lab">Agent</span><span class="t"><i style="width:50%"></i></span><span class="n">0.50</span></div><div class="sig"><span class="lab">Pain</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Scale</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Hiring</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div></div><div class="evi"><a href="https://github.com/infiniflow/ragflow" target="_blank" rel="noopener">infiniflow/ragflow</a></div></div><div class="card"><div class="rank mono">15</div><div class="co"><div class="name">Shubhamsaboo</div><div class="meta">1 repo · 138,173★ · Python</div></div><div class="score-wrap"><div class="score-line"><span class="score">18</span><span class="tier" style="background:var(--tier-watch)">watch</span></div><div class="strack"><i style="width:18%;background:var(--tier-watch)"></i></div></div><div class="signals"><div class="sig"><span class="lab">Agent</span><span class="t"><i style="width:50%"></i></span><span class="n">0.50</span></div><div class="sig"><span class="lab">Pain</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Scale</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div><div class="sig"><span class="lab">Hiring</span><span class="t"><i style="width:0%"></i></span><span class="n">0.00</span></div></div><div class="evi"><a href="https://github.com/Shubhamsaboo/awesome-llm-apps" target="_blank" rel="noopener">Shubhamsaboo/awesome-llm-apps</a></div></div></div>
+    <details class="culled" open><summary><span class="caret">▸</span> 15 repos dropped by the prefilter &mdash; why</summary><ul><li><span>TauricResearch/TradingAgents</span><span class="why">only 1 signal hit</span></li><li><span>AstrBotDevs/AstrBot</span><span class="why">only 1 signal hit</span></li><li><span>earendil-works/pi</span><span class="why">only 1 signal hit</span></li><li><span>CherryHQ/cherry-studio</span><span class="why">only 1 signal hit</span></li><li><span>zhayujie/CowAgent</span><span class="why">only 1 signal hit</span></li><li><span>eosphoros-ai/DB-GPT</span><span class="why">only 1 signal hit</span></li><li><span>zai-org/Open-AutoGLM</span><span class="why">no agent-tech signal</span></li><li><span>agent0ai/agent-zero</span><span class="why">no agent-tech signal</span></li><li><span>dzhng/deep-research</span><span class="why">no agent-tech signal</span></li><li><span>arc53/DocsGPT</span><span class="why">no agent-tech signal</span></li><li><span>ggml-org/llama.cpp</span><span class="why">no agent-tech signal</span></li><li><span>vllm-project/vllm</span><span class="why">no agent-tech signal</span></li><li><span>PaddlePaddle/PaddleOCR</span><span class="why">no agent-tech signal</span></li><li><span>rasbt/LLMs-from-scratch</span><span class="why">no agent-tech signal</span></li><li><span>unclecode/crawl4ai</span><span class="why">no agent-tech signal</span></li></ul></details>
+  </section>
+
+  <section class="method">
+    <h3>How to read this</h3>
+    <p><b>Score (0&ndash;100)</b> blends four public signals &mdash; agent technology,
+      reliability/safety <b>pain</b>, production <b>scale</b>, and <b>hiring</b> &mdash;
+      each saturating so keyword spam can't inflate it. Tiers: A&nbsp;&ge;&nbsp;70,
+      B&nbsp;&ge;&nbsp;45, C&nbsp;&ge;&nbsp;25, else watch.</p>
+    <p>This snapshot scores from repository <b>descriptions and topics only</b>. The live
+      GitHub source also pulls READMEs, where reliability/evaluation/guardrails language
+      lives &mdash; that enrichment lifts scores materially, so treat these as a floor.</p>
+    <p><b>Scope:</b> public signal only (published repos, descriptions, topics). AgentScope
+      never probes, scans, or tests anyone's running systems.</p>
+  </section>
+</div>
+</body></html>

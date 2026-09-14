@@ -1,0 +1,368 @@
+{
+  "counts": {
+    "raw_docs": 33,
+    "prefiltered": 33,
+    "survivors": 18,
+    "relevant": 18,
+    "candidates": 15
+  },
+  "tiers": {
+    "C": 10,
+    "watch": 5
+  },
+  "candidates": [
+    {
+      "company": "microsoft",
+      "score": 37,
+      "tier": "C",
+      "category_scores": {
+        "agent_tech": 1.0,
+        "pain": 0.0,
+        "scale": 0.0,
+        "hiring": 0.0
+      },
+      "aliases": [
+        "microsoft"
+      ],
+      "evidence": [
+        {
+          "url": "https://github.com/microsoft/autogen",
+          "name": "microsoft/autogen"
+        },
+        {
+          "url": "https://github.com/microsoft/agent-framework",
+          "name": "microsoft/agent-framework"
+        }
+      ],
+      "stars": 60983,
+      "language": "Python"
+    },
+    {
+      "company": "HKUDS",
+      "score": 37,
+      "tier": "C",
+      "category_scores": {
+        "agent_tech": 1.0,
+        "pain": 0.0,
+        "scale": 0.0,
+        "hiring": 0.0
+      },
+      "aliases": [
+        "HKUDS"
+      ],
+      "evidence": [
+        {
+          "url": "https://github.com/HKUDS/nanobot",
+          "name": "HKUDS/nanobot"
+        },
+        {
+          "url": "https://github.com/HKUDS/DeepCode",
+          "name": "HKUDS/DeepCode"
+        }
+      ],
+      "stars": 48154,
+      "language": "Python"
+    },
+    {
+      "company": "cft0808",
+      "score": 37,
+      "tier": "C",
+      "category_scores": {
+        "agent_tech": 1.0,
+        "pain": 0.0,
+        "scale": 0.0,
+        "hiring": 0.0
+      },
+      "aliases": [
+        "cft0808"
+      ],
+      "evidence": [
+        {
+          "url": "https://github.com/cft0808/edict",
+          "name": "cft0808/edict"
+        }
+      ],
+      "stars": 16877,
+      "language": "Python"
+    },
+    {
+      "company": "kyegomez",
+      "score": 37,
+      "tier": "C",
+      "category_scores": {
+        "agent_tech": 1.0,
+        "pain": 0.0,
+        "scale": 0.0,
+        "hiring": 0.0
+      },
+      "aliases": [
+        "kyegomez"
+      ],
+      "evidence": [
+        {
+          "url": "https://github.com/kyegomez/swarms",
+          "name": "kyegomez/swarms"
+        }
+      ],
+      "stars": 7170,
+      "language": "Python"
+    },
+    {
+      "company": "SolaceLabs",
+      "score": 37,
+      "tier": "C",
+      "category_scores": {
+        "agent_tech": 1.0,
+        "pain": 0.0,
+        "scale": 0.0,
+        "hiring": 0.0
+      },
+      "aliases": [
+        "SolaceLabs"
+      ],
+      "evidence": [
+        {
+          "url": "https://github.com/SolaceLabs/solace-agent-mesh",
+          "name": "SolaceLabs/solace-agent-mesh"
+        }
+      ],
+      "stars": 4929,
+      "language": "Python"
+    },
+    {
+      "company": "ageerle",
+      "score": 35,
+      "tier": "C",
+      "category_scores": {
+        "agent_tech": 0.75,
+        "pain": 0.0,
+        "scale": 0.333,
+        "hiring": 0.0
+      },
+      "aliases": [
+        "ageerle"
+      ],
+      "evidence": [
+        {
+          "url": "https://github.com/ageerle/ruoyi-ai",
+          "name": "ageerle/ruoyi-ai"
+        }
+      ],
+      "stars": 5694,
+      "language": "Java"
+    },
+    {
+      "company": "crewAIInc",
+      "score": 28,
+      "tier": "C",
+      "category_scores": {
+        "agent_tech": 0.75,
+        "pain": 0.0,
+        "scale": 0.0,
+        "hiring": 0.0
+      },
+      "aliases": [
+        "crewAIInc"
+      ],
+      "evidence": [
+        {
+          "url": "https://github.com/crewAIInc/crewAI",
+          "name": "crewAIInc/crewAI"
+        }
+      ],
+      "stars": 58545,
+      "language": "Python"
+    },
+    {
+      "company": "deepset-ai",
+      "score": 28,
+      "tier": "C",
+      "category_scores": {
+        "agent_tech": 0.75,
+        "pain": 0.0,
+        "scale": 0.0,
+        "hiring": 0.0
+      },
+      "aliases": [
+        "deepset-ai"
+      ],
+      "evidence": [
+        {
+          "url": "https://github.com/deepset-ai/haystack",
+          "name": "deepset-ai/haystack"
+        }
+      ],
+      "stars": 26510,
+      "language": "Python"
+    },
+    {
+      "company": "Yeachan-Heo",
+      "score": 28,
+      "tier": "C",
+      "category_scores": {
+        "agent_tech": 0.75,
+        "pain": 0.0,
+        "scale": 0.0,
+        "hiring": 0.0
+      },
+      "aliases": [
+        "Yeachan-Heo"
+      ],
+      "evidence": [
+        {
+          "url": "https://github.com/Yeachan-Heo/oh-my-claudecode",
+          "name": "Yeachan-Heo/oh-my-claudecode"
+        }
+      ],
+      "stars": 39156,
+      "language": "TypeScript"
+    },
+    {
+      "company": "openai",
+      "score": 27,
+      "tier": "C",
+      "category_scores": {
+        "agent_tech": 0.75,
+        "pain": 0.0,
+        "scale": 0.0,
+        "hiring": 0.0
+      },
+      "aliases": [
+        "openai"
+      ],
+      "evidence": [
+        {
+          "url": "https://github.com/openai/openai-agents-python",
+          "name": "openai/openai-agents-python"
+        },
+        {
+          "url": "https://github.com/openai/swarm",
+          "name": "openai/swarm"
+        }
+      ],
+      "stars": 29432,
+      "language": "Python"
+    },
+    {
+      "company": "FoundationAgents",
+      "score": 18,
+      "tier": "watch",
+      "category_scores": {
+        "agent_tech": 0.5,
+        "pain": 0.0,
+        "scale": 0.0,
+        "hiring": 0.0
+      },
+      "aliases": [
+        "FoundationAgents"
+      ],
+      "evidence": [
+        {
+          "url": "https://github.com/FoundationAgents/MetaGPT",
+          "name": "FoundationAgents/MetaGPT"
+        }
+      ],
+      "stars": 70389,
+      "language": "Python"
+    },
+    {
+      "company": "VRSEN",
+      "score": 18,
+      "tier": "watch",
+      "category_scores": {
+        "agent_tech": 0.5,
+        "pain": 0.0,
+        "scale": 0.0,
+        "hiring": 0.0
+      },
+      "aliases": [
+        "VRSEN"
+      ],
+      "evidence": [
+        {
+          "url": "https://github.com/VRSEN/agency-swarm",
+          "name": "VRSEN/agency-swarm"
+        }
+      ],
+      "stars": 4560,
+      "language": "Python"
+    },
+    {
+      "company": "golutra",
+      "score": 18,
+      "tier": "watch",
+      "category_scores": {
+        "agent_tech": 0.5,
+        "pain": 0.0,
+        "scale": 0.0,
+        "hiring": 0.0
+      },
+      "aliases": [
+        "golutra"
+      ],
+      "evidence": [
+        {
+          "url": "https://github.com/golutra/golutra",
+          "name": "golutra/golutra"
+        }
+      ],
+      "stars": 3840,
+      "language": "Rust"
+    },
+    {
+      "company": "infiniflow",
+      "score": 18,
+      "tier": "watch",
+      "category_scores": {
+        "agent_tech": 0.5,
+        "pain": 0.0,
+        "scale": 0.0,
+        "hiring": 0.0
+      },
+      "aliases": [
+        "infiniflow"
+      ],
+      "evidence": [
+        {
+          "url": "https://github.com/infiniflow/ragflow",
+          "name": "infiniflow/ragflow"
+        }
+      ],
+      "stars": 90688,
+      "language": "Go"
+    },
+    {
+      "company": "Shubhamsaboo",
+      "score": 18,
+      "tier": "watch",
+      "category_scores": {
+        "agent_tech": 0.5,
+        "pain": 0.0,
+        "scale": 0.0,
+        "hiring": 0.0
+      },
+      "aliases": [
+        "Shubhamsaboo"
+      ],
+      "evidence": [
+        {
+          "url": "https://github.com/Shubhamsaboo/awesome-llm-apps",
+          "name": "Shubhamsaboo/awesome-llm-apps"
+        }
+      ],
+      "stars": 138173,
+      "language": "Python"
+    }
+  ],
+  "meta": {
+    "crawled_at": "2026-09-14",
+    "source": "github_search",
+    "note": "Snapshot of public GitHub repository search results (description + topics only, no README). Crawled via the GitHub search API across the queries below. Public signal only.",
+    "queries": [
+      "agent framework in:name,description language:python stars:>3000",
+      "multi-agent orchestration in:name,description stars:>1500",
+      "llm evaluation OR observability in:name,description stars:>2500",
+      "ai agent assistant in:name,description stars:>8000"
+    ]
+  }
+}

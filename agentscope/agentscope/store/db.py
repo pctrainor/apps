@@ -148,6 +148,15 @@ class Store:
                 hits_by_category=json.loads(r["hits_by_category"] or "{}"),
             )
 
+    def iter_prefiltered(self) -> Iterator[Prefiltered]:
+        """All prefilter results, survivors and dropped alike."""
+        for r in self._conn.execute("SELECT * FROM prefiltered"):
+            yield Prefiltered(
+                doc_id=r["doc_id"], passed=bool(r["passed"]),
+                total_hits=r["total_hits"],
+                hits_by_category=json.loads(r["hits_by_category"] or "{}"),
+            )
+
     # --- classifications ---------------------------------------------------
     def save_classification(self, cl: Classification) -> None:
         with self._tx() as c:

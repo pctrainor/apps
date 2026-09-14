@@ -79,6 +79,23 @@ Set `GITHUB_TOKEN` in the environment to lift the unauthenticated rate limit.
 `jobboard` and `commoncrawl` are documented skeletons and will report that they
 are not yet implemented.
 
+### Dashboard
+
+`demo_data/github_crawl.json` is a committed snapshot of real GitHub search
+results. The `dashboard` command runs the funnel over it and renders a
+self-contained HTML page of ranked candidates:
+
+```bash
+python -m agentscope dashboard          # -> demo_data/dashboard.html (+ candidates.json)
+open demo_data/dashboard.html           # or point --source at a live crawl
+```
+
+The `dataset` source replays any saved crawl offline
+(`run --source dataset --data-file <crawl.json>`), so the dashboard is fully
+reproducible without a network. Scores in the snapshot come from repo
+descriptions + topics only; the live GitHub source also pulls READMEs, which
+lifts them.
+
 ## Layout
 
 ```
@@ -91,6 +108,7 @@ agentscope/
     base.py              # Source interface
     demo.py              # offline fixtures (zero setup)
     github.py            # real public GitHub source (search API + READMEs)
+    dataset.py           # replay a saved crawl offline (reproducible demos)
     real_stubs.py        # JobBoard / CommonCrawl skeletons
   pipeline/
     prefilter.py         # stage 2: keyword cull
@@ -98,6 +116,8 @@ agentscope/
     entities.py          # company-entity resolution (dedupe across sources)
     scoring.py           # stage 5: 0–100 score per resolved company
     jobs.py              # orchestrator with start/pause/stop control
+  report/dashboard.py    # render the ranked-candidate HTML dashboard
+  demo_data/             # committed crawl snapshot + generated dashboard
   tests/                 # stdlib smoke tests
 ```
 
@@ -133,6 +153,7 @@ python -m unittest discover -s tests    # zero third-party deps
 
 - [x] GitHub public source (search API + READMEs).
 - [x] Company-entity resolution (dedupe across sources).
+- [x] Candidate dashboard over a real crawl snapshot.
 - [ ] Remaining real sources: job boards and Common Crawl (`real_stubs.py`).
 - [ ] Fuzzy entity matching (aliases, domains) beyond the deterministic pass.
 - [ ] Move storage to Postgres and classification to Bedrock as a config change.

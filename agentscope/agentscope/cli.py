@@ -16,19 +16,24 @@ Classifiers: keyword (free, default), ollama (local LLM), api (hosted LLM).
 from __future__ import annotations
 
 import argparse
+import json
+import os
 import sys
-from typing import List, Optional
+from collections import Counter
+from typing import Dict, List, Optional
 
 from .classify.classifier import get_classifier
 from .config import DEFAULT_CONFIG, Config
 from .pipeline.jobs import STAGES, JobRunner
+from .report.dashboard import render as render_dashboard
 from .sources.base import Source
+from .sources.dataset import GitHubDatasetSource
 from .sources.demo import DemoSource
 from .sources.github import GitHubSource
 from .sources.real_stubs import CommonCrawlSource, JobBoardSource
 from .store.db import Store
 
-SOURCE_NAMES = ["demo", "github", "jobboard", "commoncrawl"]
+SOURCE_NAMES = ["demo", "dataset", "github", "jobboard", "commoncrawl"]
 
 _TIER_MARK = {"A": "***", "B": "** ", "C": "*  ", "watch": "   "}
 
@@ -36,6 +41,11 @@ _TIER_MARK = {"A": "***", "B": "** ", "C": "*  ", "watch": "   "}
 def _make_source(name: str, args: argparse.Namespace) -> Source:
     if name == "demo":
         return DemoSource()
+    if name == "dataset":
+        path = getattr(args, "data_file", None)
+        if not path:
+            raise SystemExit("source 'dataset' requires --data-file <crawl.json>")
+        return GitHubDatasetSource(path)
     if name == "github":
         return GitHubSource(
             query=args.query or "ai agent framework in:name,description,readme",
@@ -171,6 +181,91 @@ def cmd_demo(args: argparse.Namespace) -> int:
     return cmd_top(top_args)
 
 
+def _enrich_candidates(store: Store) -> List[Dict]:
+    """Turn stored Candidates into dashboard dicts (repo names, stars, language)."""
+    out: List[Dict] = []
+    for cand in store.top_candidates(limit=1000):
+        evidence, stars, language = [], 0, None
+        for doc_id in cand.doc_ids:
+            doc = store.get_raw_doc(doc_id)
+            if not doc:
+                continue
+            evidence.append({"url": doc.url,
+                             "name": doc.meta.get("full_name") or doc.title})
+            try:
+                stars = max(stars, int(doc.meta.get("stars", 0)))
+            except (TypeError, ValueError):
+                pass
+            language = language or doc.meta.get("language") or None
+        out.append({
+            "company": cand.company, "score": cand.score, "tier": cand.tier,
+            "category_scores": cand.category_scores, "aliases": cand.aliases,
+            "evidence": evidence, "stars": stars or None, "language": language,
+        })
+    return out
+
+
+def _culled(store: Store) -> List[Dict]:
+    """Repos the prefilter dropped, with a short reason, richest-first."""
+    rows: List[Dict] = []
+    for pf in store.iter_prefiltered():
+        if pf.passed:
+            continue
+        doc = store.get_raw_doc(pf.doc_id)
+        agent = pf.agent_hits()
+        if agent == 0:
+            reason = "no agent-tech signal"
+        else:
+            reason = f"only {pf.total_hits} signal hit" + ("s" if pf.total_hits != 1 else "")
+        rows.append({"title": (doc.title if doc else pf.doc_id),
+                     "reason": reason, "_hits": pf.total_hits})
+    rows.sort(key=lambda r: r["_hits"], reverse=True)
+    return rows
+
+
+def cmd_dashboard(args: argparse.Namespace) -> int:
+    store = Store(args.db)
+    store.reset()
+    source = _make_source(args.source, args)
+    classifier = get_classifier(args.classifier, config=DEFAULT_CONFIG)
+    runner = JobRunner(store, source, classifier, DEFAULT_CONFIG,
+                       progress=_print_progress)
+    print(f"Building dashboard | source={args.source} classifier={classifier.backend}\n")
+    try:
+        runner.run()
+    except (NotImplementedError, RuntimeError, OSError) as exc:
+        store.close()
+        raise SystemExit(f"source '{args.source}' failed: {exc}")
+
+    counts = store.counts()
+    candidates = _enrich_candidates(store)
+    tiers = Counter(c["tier"] for c in candidates)
+    culled = _culled(store)
+    meta = source.metadata() if hasattr(source, "metadata") else {}
+
+    html_doc = render_dashboard(candidates, counts, dict(tiers), culled, meta,
+                                mode="standalone")
+    os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
+    with open(args.out, "w", encoding="utf-8") as fh:
+        fh.write(html_doc)
+    if args.artifact_out:
+        with open(args.artifact_out, "w", encoding="utf-8") as fh:
+            fh.write(render_dashboard(candidates, counts, dict(tiers), culled,
+                                      meta, mode="artifact"))
+    if args.json_out:
+        with open(args.json_out, "w", encoding="utf-8") as fh:
+            json.dump({"counts": counts, "tiers": dict(tiers),
+                       "candidates": candidates, "meta": meta}, fh, indent=2)
+
+    store.close()
+    print(f"\nFunnel: {counts['raw_docs']} crawled -> {counts['survivors']} survived "
+          f"-> {counts['candidates']} candidates ({dict(tiers)})")
+    print(f"Wrote {args.out}"
+          + (f", {args.json_out}" if args.json_out else "")
+          + (f", {args.artifact_out}" if args.artifact_out else ""))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="agentscope",
@@ -182,6 +277,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     r = sub.add_parser("run", help="run the pipeline")
     r.add_argument("--source", default="demo", choices=SOURCE_NAMES)
+    r.add_argument("--data-file", default=None,
+                   help="crawl JSON path for --source dataset")
     r.add_argument("--query", default=None,
                    help="search query for network sources (github/jobboard)")
     r.add_argument("--max-results", type=int, default=30,
@@ -214,6 +311,23 @@ def build_parser() -> argparse.ArgumentParser:
 
     dm = sub.add_parser("demo", help="zero-setup end-to-end demo")
     dm.set_defaults(func=cmd_demo)
+
+    db = sub.add_parser("dashboard", help="run the funnel and render an HTML dashboard")
+    db.add_argument("--source", default="dataset", choices=SOURCE_NAMES)
+    db.add_argument("--data-file", default="demo_data/github_crawl.json",
+                    help="crawl JSON for --source dataset (default: %(default)s)")
+    db.add_argument("--query", default=None, help="query for network sources")
+    db.add_argument("--max-results", type=int, default=30)
+    db.add_argument("--no-readme", action="store_true")
+    db.add_argument("--classifier", default="keyword",
+                    choices=["keyword", "ollama", "api"])
+    db.add_argument("--out", default="demo_data/dashboard.html",
+                    help="standalone HTML output (default: %(default)s)")
+    db.add_argument("--json-out", default="demo_data/candidates.json",
+                    help="funnel output JSON (default: %(default)s)")
+    db.add_argument("--artifact-out", default=None,
+                    help="also write artifact-mode HTML (title+style+body) here")
+    db.set_defaults(func=cmd_dashboard)
     return p
 
 

@@ -1,0 +1,25 @@
+# AgentScope dependencies
+# -----------------------------------------------------------------------------
+# The CORE pipeline and the offline demo run on the Python standard library
+# ONLY (sqlite3, argparse, urllib, dataclasses). `python -m agentscope` needs
+# nothing installed. The packages below are OPTIONAL, grouped by what they
+# unlock. Install only the group you need.
+
+# --- Local LLM classification (OllamaClassifier) ------------------------------
+# Talks to a local Ollama server over HTTP using urllib, so no package is
+# strictly required. Install the official client only if you prefer it:
+# ollama>=0.3.0
+
+# --- Hosted LLM classification (ApiClassifier) --------------------------------
+# anthropic>=0.40.0        # swap for boto3 to run on Amazon Bedrock instead
+
+# --- Real, public-signal sources (skeletons in sources/real_stubs.py) ---------
+# requests>=2.31.0         # JobBoardSource / GitHubSource HTTP calls
+# warcio>=1.7.4            # CommonCrawlSource: read archived WARC records
+# selectolax>=0.3.21       # fast HTML -> text extraction
+
+# --- Postgres storage backend (swap for store/db.py's SQLite Store) -----------
+# psycopg[binary]>=3.1     # when moving off local SQLite
+
+# --- Development --------------------------------------------------------------
+# pytest>=8.0              # optional; tests also run under stdlib unittest

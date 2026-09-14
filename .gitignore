@@ -32,3 +32,15 @@ logs
 # Node.js downloads
 node-v*.tar.gz
 node-v*/
+
+# Python (agentscope)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+# Local AgentScope stores
+agentscope.db
+*.sqlite
+*.sqlite3
+agentscope/**/*.db

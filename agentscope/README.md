@@ -96,6 +96,27 @@ reproducible without a network. Scores in the snapshot come from repo
 descriptions + topics only; the live GitHub source also pulls READMEs, which
 lifts them.
 
+### Web structure (hyperlink graph)
+
+Beyond page content, AgentScope can work the *structure* of the web — a
+domain-level hyperlink graph — as an even cheaper top of the funnel. It ranks
+domains by PageRank (structural authority) and discovers prospects by structural
+similarity to companies you already know.
+
+```bash
+python -m agentscope graph --top 10                       # authorities by PageRank
+python -m agentscope graph --neighbors langchain.com      # in/out links
+python -m agentscope graph \
+    --seed sierra.ai --seed cognition.ai \
+    --only-category agent_company                         # discover similar companies
+python -m agentscope graph --seed sierra.ai --map-out map.html   # render a visual map
+```
+
+The graph loads in the **Web Data Commons** layout (a `vertices.txt` of
+`id  domain` and an `edges.txt` of `src_id  dst_id`), so a real WDC host/domain
+graph drops in by path. `demo_data/webgraph/` holds a small illustrative sample
+(real domains, synthetic edges) so it runs offline.
+
 ## Layout
 
 ```
@@ -116,8 +137,10 @@ agentscope/
     entities.py          # company-entity resolution (dedupe across sources)
     scoring.py           # stage 5: 0–100 score per resolved company
     jobs.py              # orchestrator with start/pause/stop control
+  graph/webgraph.py      # domain hyperlink graph: PageRank, discovery
   report/dashboard.py    # render the ranked-candidate HTML dashboard
-  demo_data/             # committed crawl snapshot + generated dashboard
+  report/graphmap.py     # render the domain graph as a visual map (SVG)
+  demo_data/             # crawl snapshot, dashboard, sample web graph
   tests/                 # stdlib smoke tests
 ```
 
@@ -154,6 +177,8 @@ python -m unittest discover -s tests    # zero third-party deps
 - [x] GitHub public source (search API + READMEs).
 - [x] Company-entity resolution (dedupe across sources).
 - [x] Candidate dashboard over a real crawl snapshot.
+- [x] Domain hyperlink-graph structure: PageRank + prospect discovery + map.
+- [ ] Ingest a real Web Data Commons host/domain graph (+ precomputed ranks).
 - [ ] Remaining real sources: job boards and Common Crawl (`real_stubs.py`).
 - [ ] Fuzzy entity matching (aliases, domains) beyond the deterministic pass.
 - [ ] Move storage to Postgres and classification to Bedrock as a config change.

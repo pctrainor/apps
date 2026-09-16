@@ -24,6 +24,7 @@ from typing import Dict, List, Optional
 
 from .classify.classifier import get_classifier
 from .config import DEFAULT_CONFIG, Config
+from .graph.webgraph import WebGraph
 from .pipeline.jobs import STAGES, JobRunner
 from .report.dashboard import render as render_dashboard
 from .sources.base import Source
@@ -266,6 +267,66 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_graph(args: argparse.Namespace) -> int:
+    try:
+        g = WebGraph.load(args.vertices, args.edges, args.labels)
+    except FileNotFoundError as exc:
+        raise SystemExit(f"graph file not found: {exc}")
+    print(f"Domain graph: {g.order()} domains, {g.size()} links "
+          f"(source: {args.vertices})\n")
+
+    def _lab(d: str) -> str:
+        c = g.labels.get(d)
+        return f" [{c}]" if c else ""
+
+    print(f"Top {args.top} by {args.by} (structural authorities):")
+    for d, s in g.top(args.top, by=args.by):
+        extra = f"pr={s:.4f}" if args.by == "pagerank" else f"in={int(s)}"
+        print(f"  {extra:>10}  in={g.in_degree(d):>2} out={g.out_degree(d):>2}  {d}{_lab(d)}")
+
+    if args.neighbors:
+        d = args.neighbors
+        if d not in g.nodes:
+            print(f"\n'{d}' not in graph.")
+        else:
+            print(f"\n{d}{_lab(d)}")
+            print(f"  links to  ({g.out_degree(d)}): {', '.join(g.neighbors(d, 'out'))}")
+            print(f"  linked by ({g.in_degree(d)}): {', '.join(g.neighbors(d, 'in'))}")
+
+    discovery = g.similar_to(args.seed, k=args.limit * 3) if args.seed else []
+    if args.seed:
+        results = discovery
+        if args.only_category:
+            results = [(d, s) for d, s in results
+                       if g.labels.get(d) == args.only_category]
+        results = results[:args.limit]
+        cat = f" (category={args.only_category})" if args.only_category else ""
+        print(f"\nDiscovery{cat}: domains structurally similar to "
+              f"{', '.join(args.seed)}")
+        print("  (rank by shared out-links — same stack as your seeds)")
+        if not results:
+            print("  (no matches)")
+        for d, s in results:
+            shared = g.shared_targets(args.seed[0], d)[:4]
+            via = (" via " + ", ".join(shared)) if shared else ""
+            print(f"  {s:.3f}  {d}{_lab(d)}{via}")
+
+    if args.map_out or args.map_artifact:
+        from .report.graphmap import render as render_map
+        pr = g.pagerank()
+        seeds = args.seed or []
+        if args.map_out:
+            os.makedirs(os.path.dirname(os.path.abspath(args.map_out)), exist_ok=True)
+            with open(args.map_out, "w", encoding="utf-8") as fh:
+                fh.write(render_map(g, pr, seeds, discovery, mode="standalone"))
+            print(f"\nWrote map: {args.map_out}")
+        if args.map_artifact:
+            with open(args.map_artifact, "w", encoding="utf-8") as fh:
+                fh.write(render_map(g, pr, seeds, discovery, mode="artifact"))
+            print(f"Wrote map (artifact mode): {args.map_artifact}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="agentscope",
@@ -328,6 +389,26 @@ def build_parser() -> argparse.ArgumentParser:
     db.add_argument("--artifact-out", default=None,
                     help="also write artifact-mode HTML (title+style+body) here")
     db.set_defaults(func=cmd_dashboard)
+
+    gr = sub.add_parser("graph",
+                        help="analyze a domain hyperlink graph (structure)")
+    gr.add_argument("--vertices", default="demo_data/webgraph/vertices.txt")
+    gr.add_argument("--edges", default="demo_data/webgraph/edges.txt")
+    gr.add_argument("--labels", default="demo_data/webgraph/labels.txt")
+    gr.add_argument("--top", type=int, default=10)
+    gr.add_argument("--by", default="pagerank", choices=["pagerank", "in_degree"])
+    gr.add_argument("--neighbors", default=None, metavar="DOMAIN",
+                    help="show in/out neighbors of a domain")
+    gr.add_argument("--seed", action="append", metavar="DOMAIN",
+                    help="seed domain for peer discovery (repeatable)")
+    gr.add_argument("--only-category", default=None,
+                    help="restrict discovery results to this category label")
+    gr.add_argument("--limit", type=int, default=10, help="discovery result count")
+    gr.add_argument("--map-out", default=None,
+                    help="render the graph as a standalone HTML map to this path")
+    gr.add_argument("--map-artifact", default=None,
+                    help="also write artifact-mode HTML (title+style+body) here")
+    gr.set_defaults(func=cmd_graph)
     return p
 
 

@@ -1,0 +1,36 @@
+{
+  "name": "agent-sandbox",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Local test site for browser agents: a data-entry form and a Q&A board backed by Postgres.",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:reset": "tsx scripts/db.ts reset",
+    "db:psql": "docker compose exec db psql -U sandbox sandbox",
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "typecheck": "tsc --noEmit",
+    "browse": "tsx scripts/browse.ts"
+  },
+  "dependencies": {
+    "next": "^16.4.0",
+    "pg": "^8.23.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "playwright": "^1.64.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}

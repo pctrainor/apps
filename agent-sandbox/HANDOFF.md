@@ -115,61 +115,55 @@ commands: open <url> | look | click <n> | type <n> <text> | select <n> <option> 
 
 ## Status
 
-Verified in the cloud container:
+Verified on Phil's Mac (M4, 24 GB, macOS 26) on 2026-10-10:
 
-- `next build` and `tsc` pass.
-- Postgres starts with all four tables, and `db:reset` works.
-- The browser CLI opens the site, and sign-in sets the cookie.
+- `npm run typecheck` and `npm run build` pass.
+- Postgres starts, and `db:reset` works.
+- Full smoke test with the browser CLI as `user1` and `user2`:
+  - Intake rejected path: all errors show, and text fields, the Role dropdown, the plan radio and the
+    interest checkboxes keep their values.
+  - Intake success path: "Saved record #1" banner, and the form clears.
+  - Board: ask, reply with both kinds, resolve (author only), and the All, Unanswered, Open and Resolved
+    filters.
+  - Records with "My records", and Activity with the per-agent summary and events.
+- `npx playwright install chromium` works on macOS (headless). `HEADLESS=false` hasn't been tried.
+- macOS gotcha: Docker Desktop's CLI may not be on PATH. Use
+  `export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"`.
 
-**Not verified yet:**
+### Simulation runner (`scripts/simulate.ts`): built, partly verified
 
-- Intake form, rejected path: errors show, and the entered values come back after the submit.
-  - The form remounts with `key={state.attempt}` and uses `defaultValue`/`defaultChecked`.
-  - Check that the select, radio buttons and checkboxes really get their values back.
-- Intake form, success path: the "Saved record #N" banner.
-- Board: ask, reply (both kinds), resolve, and the filters.
-- The Activity page and the "Mine" filter on Records.
-- On macOS: `npx playwright install chromium` and `HEADLESS=false`.
+- The browser core moved to `scripts/browser.ts` (`createAgents()` returns `run`, `lookAt` and `close`).
+  `browse.ts` is now just the CLI and server on top of it. With `allowedOrigin`, `open` refuses other
+  origins, accepts paths like `/board`, and undoes any action that lands off-site.
+  `BROWSE_ALLOWED_ORIGIN` sets that for the CLI too.
+- `npm run simulate -- -n 3 -k 2 [-s 60] [-c 3] [-m qwen2.5:7b-instruct]`. Env: `SITE_URL`, `LLM_BASE_URL`,
+  `LLM_MODEL`, `LLM_API_KEY`, `CONCURRENCY`, `PAUSE_MS` ("min-max"), `LLM_TIMEOUT_MS` (default 180 s).
+- Each agent gets a persona (role plus quirk) and generated customer cards. Card countries include the UK,
+  Germany and Mexico, and about 30% of cards ask for a plan that breaks the rules, so agents hit the
+  deliberate friction.
+- The runner tracks progress from the page: "Saved record #N", "Post question" landing on /board/N,
+  "Your reply was posted.", and "Mark as resolved". It refuses `done` until K records are saved and the
+  board has been checked, and it nudges agents to check the board if they haven't for 12 steps.
+- Logs go to `runs/<time>/`: `trajectories.jsonl` (one line per step: obs hash, raw reply, action,
+  result, prompt_tokens), `observations.jsonl` (each distinct page once, by hash), `config.json` and
+  `summary.json`.
+- Verified: a 2-agent run with `qwen2.5:7b-instruct` got through 29 steps. Both agents signed in, filled
+  the intake form, recovered from tool errors (typing into a select, unchecking a radio) and got realistic
+  rejections (region "SG").
+- Not verified: a full run to the end, because Ollama on the Mac wedged mid-run. Requests hung even after
+  `brew services restart ollama`, and then ran at about 5 tokens/s on the 7B and 38 tokens/s on the 1.5B,
+  with the Mac on battery. That's why the LLM request timeout exists. Retry on mains power, or after a
+  reboot.
+- Ollama runs with a 4096-token context today. Prompts were about 850 to 1,500 tokens, but board pages will
+  grow. Set `OLLAMA_CONTEXT_LENGTH=16384` and `OLLAMA_NUM_PARALLEL` to the concurrency, then restart Ollama.
 
 ## Next steps
 
-1. **Run it and smoke-test it.** Start the database and the dev server. Then, with the browser CLI, play
-   `user1` and `user2`:
-   - Submit an invalid record, then a valid one.
-   - Have `user1` post a question, have `user2` reply with each kind, and have `user1` mark it resolved.
-   - Check that Records and Activity show all of it.
-   - Fix what breaks, then run `npm run typecheck` and `npm run build`, and commit.
-2. **Ask Phil about the model machine**: OS, and GPU with VRAM (or Mac and its memory). That decides the
-   model size, how many agents run at once, and the context length.
-3. **Build the simulation runner** (`scripts/simulate.ts`, `npm run simulate -- -n 5`):
-   - **Model:** any OpenAI-compatible `/v1/chat/completions` endpoint. Default to Ollama at
-     `http://localhost:11434/v1`, set with `LLM_BASE_URL` and `LLM_MODEL`.
-     - The CLI describes pages as text, so a text-only instruct model is enough (for example an
-       8B-class Qwen3). No vision model is needed.
-     - Context of 16k or more. In Ollama, set `OLLAMA_CONTEXT_LENGTH`, and `OLLAMA_NUM_PARALLEL` equal to
-       the number of agents that run at once.
-   - **Reuse the browser code:** refactor `browse.ts` so `run()` and `look()` can be imported, and drive
-     the agents in-process instead of starting a CLI process per step.
-   - **Each agent:**
-     - Gets a persona (`user1` … `userN`, a role and some quirks) and a goal: sign in, save K fictional
-       records, post a question when stuck, and regularly check the board's Unanswered filter to reply.
-       It answers when it knows, and otherwise explains how it would find out.
-   - **Each step:**
-     - The model sees the system prompt, the current `look` output and the last ~15 history lines.
-     - It replies with one JSON action (`open`, `click`, `type`, `select`, `check`, `uncheck`, `press`,
-       `back` or `done`).
-     - Request JSON output (`response_format`, or Ollama's `format`). Parse leniently: strip `<think>`
-       blocks and code fences.
-     - Give up after 3 invalid replies in a row, and nudge the model when it repeats an action.
-   - **Limits:** run the agents concurrently, capped by `CONCURRENCY`. Stagger their starts and add random
-     pauses between actions so the traffic looks human.
-   - **Logs:** write each trajectory to JSONL (step, observation hash, action, result). This also builds a
-     dataset for fine-tuning later.
-   - **Browser only:** agents act only through the browser, never through curl, the API or psql. That's the
-     point of the simulation.
-   - **Stay on the site:** restrict `open` to `http://localhost:3000` while simulating. Today the CLI
-     accepts any URL.
-4. **Later ideas:**
+1. Finish a full simulation run (`npm run db:reset && npm run simulate -- -n 2 -k 1`), read
+   `summary.json` and the trajectories, and tune the prompt or nudges where agents loop.
+2. Agents that finish early stop answering questions. Consider letting them linger on the board until all
+   agents are done.
+3. **Later ideas:**
    - A "scenario" setting (number of agents, records per agent, how chatty they are).
    - Edit and delete for records.
    - Run several simulations side by side and compare them.

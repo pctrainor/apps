@@ -16,7 +16,8 @@
     "build": "next build",
     "start": "next start -p 3000",
     "typecheck": "tsc --noEmit",
-    "browse": "tsx scripts/browse.ts"
+    "browse": "tsx scripts/browse.ts",
+    "simulate": "tsx scripts/simulate.ts"
   },
   "dependencies": {
     "next": "^16.4.0",

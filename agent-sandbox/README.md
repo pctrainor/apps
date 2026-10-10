@@ -37,3 +37,17 @@ Set `HEADLESS=false` in `.env` to watch the agents' Chrome windows.
 - `npm run db:reset` empties all tables.
 - `npm run db:psql` opens a SQL shell.
 - `npm run db:down` stops Postgres (data is kept in a Docker volume).
+
+## Simulate many users with a local LLM
+
+Needs a running site (above) and an OpenAI-compatible model server. The default is Ollama with
+`qwen2.5:7b-instruct`.
+
+```bash
+npm run db:reset
+npm run simulate -- -n 3 -k 2     # 3 agents (user1..user3), 2 records each
+npm run simulate -- --help        # options and environment variables
+```
+
+Agents act only through the browser and are kept on `SITE_URL`. Each run writes trajectories to `runs/<time>/`.
+For Ollama, set `OLLAMA_CONTEXT_LENGTH=16384` and `OLLAMA_NUM_PARALLEL` to the number of concurrent agents.

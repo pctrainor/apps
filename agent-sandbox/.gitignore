@@ -5,3 +5,5 @@ next-env.d.ts
 *.tsbuildinfo
 screenshots/
 .browse.log
+runs/
+.dev.log

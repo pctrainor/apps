@@ -43,3 +43,64 @@ CREATE TABLE IF NOT EXISTS events (
   detail     TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ---------- Trading floor (npm run market): paper money at real prices ----------
+
+CREATE TABLE IF NOT EXISTS traders (
+  name       TEXT PRIMARY KEY,
+  persona    TEXT NOT NULL,
+  model      TEXT NOT NULL,
+  start_usd  NUMERIC(18, 2) NOT NULL,
+  cash       NUMERIC(18, 2) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS holdings (
+  trader TEXT NOT NULL REFERENCES traders(name) ON DELETE CASCADE,
+  coin   TEXT NOT NULL,
+  qty    NUMERIC(28, 10) NOT NULL DEFAULT 0,
+  PRIMARY KEY (trader, coin)
+);
+
+CREATE TABLE IF NOT EXISTS trades (
+  id         SERIAL PRIMARY KEY,
+  trader     TEXT NOT NULL REFERENCES traders(name) ON DELETE CASCADE,
+  side       TEXT NOT NULL CHECK (side IN ('buy', 'sell')),
+  coin       TEXT NOT NULL,
+  qty        NUMERIC(28, 10) NOT NULL,
+  price      NUMERIC(18, 6) NOT NULL,
+  usd        NUMERIC(18, 2) NOT NULL,
+  fee        NUMERIC(18, 2) NOT NULL,
+  reason     TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- What the traders say to each other, plus trade and rejection notices.
+CREATE TABLE IF NOT EXISTS floor_messages (
+  id         BIGSERIAL PRIMARY KEY,
+  trader     TEXT NOT NULL,
+  kind       TEXT NOT NULL CHECK (kind IN ('chat', 'trade', 'rejected', 'system')),
+  body       TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS prices (
+  coin   TEXT NOT NULL,
+  ts     TIMESTAMPTZ NOT NULL,
+  price  NUMERIC(18, 6) NOT NULL,
+  source TEXT NOT NULL,
+  PRIMARY KEY (coin, ts)
+);
+
+-- Portfolio value over time per trader, plus the 'benchmark' series (equal split at the start, never traded).
+CREATE TABLE IF NOT EXISTS value_history (
+  series TEXT NOT NULL,
+  ts     TIMESTAMPTZ NOT NULL,
+  value  NUMERIC(18, 2) NOT NULL,
+  PRIMARY KEY (series, ts)
+);
+
+CREATE TABLE IF NOT EXISTS market_meta (
+  key   TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);

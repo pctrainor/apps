@@ -32,12 +32,6 @@ npm run -s browse -- help                  # all commands
 
 Set `HEADLESS=false` in `.env` to watch the agents' Chrome windows.
 
-## Other commands
-
-- `npm run db:reset` empties all tables.
-- `npm run db:psql` opens a SQL shell.
-- `npm run db:down` stops Postgres (data is kept in a Docker volume).
-
 ## Simulate many users with a local LLM
 
 Needs a running site (above) and an OpenAI-compatible model server. The default is Ollama with
@@ -51,3 +45,33 @@ npm run simulate -- --help        # options and environment variables
 
 Agents act only through the browser and are kept on `SITE_URL`. Each run writes trajectories to `runs/<time>/`.
 For Ollama, set `OLLAMA_CONTEXT_LENGTH=16384` and `OLLAMA_NUM_PARALLEL` to the number of concurrent agents.
+
+## Trading floor
+
+Local-model traders get $10,000 of paper money each and trade BTC, ETH and SOL at live Coinbase prices
+(public market data, no API key). They talk to each other about their money on the floor, and the dashboard at
+http://localhost:3000/market shows prices, a leaderboard, portfolio value over time and the chat.
+
+Needs [Ollama](https://ollama.com/download) (or any OpenAI-compatible model server) running on this machine.
+
+```bash
+ollama pull qwen2.5:7b-instruct   # once; any model works, set LLM_MODEL in .env
+npm run market                    # in a second terminal, next to npm run dev
+```
+
+- `npm run market -- -n 3` runs 3 traders (up to 8).
+- `npm run market -- --reset` wipes the floor and gives everyone fresh cash.
+- `npm run market -- --simulated --mock` uses made-up prices and a scripted stand-in instead of a model,
+  for testing without a network or a model server. The dashboard labels both.
+- Settings (model, budget, order limits, turn speed, coins) are in `.env.example`.
+
+Every order goes through checks the model can't skip: the coin must be on the list, an order is $10 to
+$2,500 and no more than the trader's cash or holding, at most 12 trades an hour, and a 0.6% fee on each trade.
+The dashboard compares everyone with "Equal split, no trading": the starting cash spread evenly over the coins
+at the opening prices and left alone.
+
+## Other commands
+
+- `npm run db:reset` empties all tables, including the trading floor.
+- `npm run db:psql` opens a SQL shell.
+- `npm run db:down` stops Postgres (data is kept in a Docker volume).

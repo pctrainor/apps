@@ -69,6 +69,9 @@ npm run -s browse -- user1 open localhost:3000
 | `db/schema.sql` | Tables: `submissions`, `questions`, `answers` (`kind` is `answer` or `approach`), `events` |
 | `scripts/browse.ts` | Browser CLI for agents (see below) |
 | `scripts/db.ts` | `db:reset` |
+| `scripts/market.ts`, `scripts/llm.ts` | Trading floor runner and model client (see "Trading floor") |
+| `app/market/` | Trading floor dashboard |
+| `lib/market.ts` | Trader personas, fee, number formatting |
 
 ## Deliberate friction (don't "fix" it)
 
@@ -168,6 +171,66 @@ Verified on Phil's Mac (M4, 24 GB, macOS 26) on 2026-10-10:
    - Edit and delete for records.
    - Run several simulations side by side and compare them.
    - Let the runner use a separate planner model.
+
+## Trading floor (added after the first handoff)
+
+Phil wants to watch local-model agents trade crypto with fake USD at real prices and talk to each other about
+their money. Later they may connect a real Coinbase account; see "Real money later" below.
+
+- `npm run market` (`scripts/market.ts`) runs everything:
+  - **Prices:** polls Coinbase's public Exchange API (`api.exchange.coinbase.com/products/<COIN>-USD/ticker`)
+    every `PRICE_SECONDS` (10). No key is needed. On start it seeds the last ~5 hours from 1-minute candles.
+    `--simulated` switches to a random walk.
+  - **Traders:** personas user1–user8 come from `lib/market.ts`. Each gets `START_USD` of paper money.
+  - **Each turn:**
+    - The model gets prices with 15-minute and 1-hour changes, the trader's account, its last order result
+      and the last 14 floor messages.
+    - It replies with JSON: `say`, `action` (buy/sell/hold), `coin`, `usd` and `reason`.
+    - The message is posted, then the order runs through `executeOrder()`.
+  - **Order checks:** allowed coins only; $10 to `MAX_ORDER_USD`; no more than the trader's cash or holding;
+    a sell of 98% or more sells the whole position; at most `MAX_TRADES_PER_HOUR`; a 0.6% fee.
+    - Each order runs in one DB transaction, with `SELECT … FOR UPDATE` on the trader row.
+    - Rejections are posted to the floor and fed back to the trader on its next turn.
+  - **Snapshots:** every price tick records each trader's total value in `value_history`, plus a `benchmark`
+    series: `START_USD` split evenly over the coins at the opening prices and never traded.
+- **Model client:** `scripts/llm.ts`.
+  - Works with any OpenAI-compatible server.
+  - Uses `response_format` json_schema and falls back to json_object, then none, if the server returns a 400.
+  - Parses replies leniently (strips `<think>` blocks and code fences).
+  - Checks `/models` at startup so a missing Ollama or model gives a clear error.
+  - `--mock` (or `LLM_MODEL=mock`) uses a scripted stand-in for testing.
+- **Dashboard:** `app/market/page.tsx` and the client chart `app/market/ValueChart.tsx`, refreshed every 2 s.
+  - Price tiles with sparklines, a leaderboard with the benchmark row, a value-over-time chart with a hover
+    tooltip, the latest trades and the floor feed.
+  - Each trader keeps a fixed color by persona order (`--series-N` tokens in `globals.css`).
+- **New tables:** `traders`, `holdings`, `trades`, `floor_messages`, `prices`, `value_history`,
+  `market_meta`. `npm run market` applies `db/schema.sql` on start, so existing databases get them too.
+
+**Status:**
+- Tested in the cloud container with `--simulated --mock`:
+  - Traders chat and trade.
+  - Cash and holdings reconcile exactly against the trade log.
+  - The dashboard renders.
+  - `next build` and `tsc` pass.
+- **Not tested:**
+  - The live Coinbase feed and a real Ollama model. The container's network blocks both.
+  - Whether Ollama's OpenAI endpoint accepts the json_schema (with `type: ["string","null"]`) or falls back.
+  - How long a turn takes on the Mac. The simulate runner saw about 5 tokens/s from the 7B on battery.
+- If turns are slow, try a smaller or non-thinking model, or raise `TURN_SECONDS`.
+
+**Next steps for the floor:**
+1. Run it with live prices and Phil's model. Tune the prompts if traders invent numbers, repeat themselves or
+   never trade.
+2. Add a pause/resume control and a "new round" button to the dashboard (today it's Ctrl+C and `--reset`).
+3. Let traders reply to each other more directly (for example, show who mentioned them).
+
+**Real money later.** Agreed so far, nothing built:
+- Agents never hold Coinbase keys. Their orders go through the same `executeOrder()` checks, which would
+  call Coinbase Advanced Trade in a live mode.
+- One Coinbase portfolio per agent, each funded with only what Phil is willing to lose, and an API key per
+  portfolio with View and Trade permissions only, never Transfer.
+- Old Coinbase Pro API keys don't work any more. Phil needs a new key from the Coinbase Developer Platform,
+  with ECDSA as the signature type.
 
 ## Background
 

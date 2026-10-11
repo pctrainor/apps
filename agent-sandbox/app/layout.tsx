@@ -21,6 +21,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Link href="/board">Message board</Link>
             <Link href="/reference">Reference</Link>
             <Link href="/activity">Activity</Link>
+            <Link href="/market">Trading floor</Link>
           </nav>
           <span className="who">{agent ? <>Signed in as <strong>{agent}</strong></> : "Not signed in"}</span>
         </header>

@@ -147,11 +147,28 @@ export function mockTurn(trader: string, coins: string[], cash: number, holdings
     target = heldCoin;
     usdAmount = Math.round(value * (0.3 + Math.random() * 0.7));
   }
+  const notes = [`Watch ${target} after my last move.`, `Fees add up when I trade too often.`, `${target} swings hard; keep orders small.`];
+  const tools = [
+    { tool: "news", input: target },
+    { tool: "coin", input: target },
+    { tool: "sentiment", input: "" },
+    { tool: "search", input: `${target} price outlook` },
+  ];
   return {
     say: pick(lines).replaceAll("{coin}", target),
     action,
     coin: action === "hold" ? null : target,
     usd: usdAmount,
     reason: "mock model",
+    remember: Math.random() < 0.3 ? pick(notes) : null,
+    research: Math.random() < 0.3 ? pick(tools) : null,
+  };
+}
+
+/** Scripted reflection for the mock model. */
+export function mockReflection(trader: string) {
+  return {
+    memory: `${trader} (mock): I trade small, I keep some cash, and I check news before big buys.`,
+    lessons: Math.random() < 0.5 ? ["Small orders keep fees and regret low."] : [],
   };
 }

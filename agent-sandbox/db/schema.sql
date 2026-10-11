@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS trades (
 CREATE TABLE IF NOT EXISTS floor_messages (
   id         BIGSERIAL PRIMARY KEY,
   trader     TEXT NOT NULL,
-  kind       TEXT NOT NULL CHECK (kind IN ('chat', 'trade', 'rejected', 'system')),
+  kind       TEXT NOT NULL,
   body       TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -103,4 +103,39 @@ CREATE TABLE IF NOT EXISTS value_history (
 CREATE TABLE IF NOT EXISTS market_meta (
   key   TEXT PRIMARY KEY,
   value TEXT NOT NULL
+);
+
+-- Floor message kinds. Dropped and re-added so databases created before research and consensus existed
+-- accept the new kinds.
+ALTER TABLE floor_messages DROP CONSTRAINT IF EXISTS floor_messages_kind_check;
+ALTER TABLE floor_messages ADD CONSTRAINT floor_messages_kind_check
+  CHECK (kind IN ('chat', 'trade', 'rejected', 'system', 'research', 'memory', 'consensus'));
+
+-- Long-term memory per trader. Survives `npm run market -- --reset`; only `--forget` clears it.
+CREATE TABLE IF NOT EXISTS trader_memories (
+  id         BIGSERIAL PRIMARY KEY,
+  trader     TEXT NOT NULL,
+  kind       TEXT NOT NULL CHECK (kind IN ('note', 'lesson', 'reflection')),
+  body       TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS trader_memories_lookup ON trader_memories (trader, kind, id);
+
+-- What traders looked up on the internet, and what came back.
+CREATE TABLE IF NOT EXISTS research_log (
+  id         BIGSERIAL PRIMARY KEY,
+  trader     TEXT NOT NULL,
+  tool       TEXT NOT NULL,
+  input      TEXT NOT NULL DEFAULT '',
+  ok         BOOLEAN NOT NULL,
+  result     TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Group consensus written by the floor lead (a higher-level model, or a Claude session for now).
+CREATE TABLE IF NOT EXISTS consensus (
+  id         BIGSERIAL PRIMARY KEY,
+  author     TEXT NOT NULL,
+  body       TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

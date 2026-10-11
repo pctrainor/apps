@@ -18,7 +18,8 @@
     "typecheck": "tsc --noEmit",
     "browse": "tsx scripts/browse.ts",
     "simulate": "tsx scripts/simulate.ts",
-    "market": "tsx scripts/market.ts"
+    "market": "tsx scripts/market.ts",
+    "consensus": "tsx scripts/consensus.ts"
   },
   "dependencies": {
     "next": "^16.4.0",

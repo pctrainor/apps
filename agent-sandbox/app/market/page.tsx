@@ -11,29 +11,38 @@ const traderColor = (name: string) => {
 };
 
 type Trader = { name: string; persona: string; model: string; start_usd: string; cash: string };
-type Message = { id: number; trader: string; kind: "chat" | "trade" | "rejected" | "system"; body: string; created_at: Date };
+type Kind = "chat" | "trade" | "rejected" | "system" | "research" | "memory" | "consensus";
+type Message = { id: number; trader: string; kind: Kind; body: string; created_at: Date };
 type Trade = { id: number; trader: string; side: string; coin: string; usd: string; price: string; reason: string; created_at: Date };
+type Memory = { trader: string; kind: "note" | "lesson" | "reflection"; body: string; created_at: Date };
+type Research = { trader: string; tool: string; input: string; ok: boolean; result: string; created_at: Date };
+type MarketRow = { price: number; ch1h: number | null; ch24h: number | null; ch7d: number | null };
+type Brief = {
+  updatedAt: number;
+  fearGreed?: { value: number; label: string; history: number[] };
+  trending?: { symbol: string; name: string; change24h: number | null }[];
+  headlines?: { source: string; title: string; link: string; published: number }[];
+  errors: string[];
+};
 
 async function load() {
   try {
-    const [meta, traders, holdings, latest, hourAgo, spark, values, messages, trades] = await Promise.all([
+    const [meta, traders, holdings, latest, spark, values, messages, trades, memories, research, consensus] = await Promise.all([
       pool.query<{ key: string; value: string }>("SELECT key, value FROM market_meta"),
       pool.query<Trader>("SELECT name, persona, model, start_usd, cash FROM traders ORDER BY name"),
       pool.query<{ trader: string; coin: string; qty: string }>("SELECT trader, coin, qty FROM holdings WHERE qty > 0"),
       pool.query<{ coin: string; price: string; ts: Date }>("SELECT DISTINCT ON (coin) coin, price, ts FROM prices ORDER BY coin, ts DESC"),
-      pool.query<{ coin: string; price: string }>(
-        "SELECT DISTINCT ON (coin) coin, price FROM prices WHERE ts <= now() - interval '1 hour' ORDER BY coin, ts DESC",
-      ),
-      pool.query<{ coin: string; ts: Date; price: string }>(
-        "SELECT coin, ts, price FROM prices WHERE ts > now() - interval '3 hours' ORDER BY ts",
-      ),
+      pool.query<{ coin: string; ts: Date; price: string }>("SELECT coin, ts, price FROM prices WHERE ts > now() - interval '24 hours' ORDER BY ts"),
       pool.query<{ series: string; ts: Date; value: string }>(
         "SELECT series, ts, value FROM value_history WHERE ts > now() - interval '12 hours' ORDER BY ts",
       ),
-      pool.query<Message>("SELECT * FROM floor_messages ORDER BY id DESC LIMIT 80"),
+      pool.query<Message>("SELECT * FROM floor_messages ORDER BY id DESC LIMIT 100"),
       pool.query<Trade>("SELECT id, trader, side, coin, usd, price, reason, created_at FROM trades ORDER BY id DESC LIMIT 15"),
+      pool.query<Memory>("SELECT trader, kind, body, created_at FROM trader_memories ORDER BY id DESC LIMIT 500"),
+      pool.query<Research>("SELECT trader, tool, input, ok, result, created_at FROM research_log ORDER BY id DESC LIMIT 80"),
+      pool.query<{ author: string; body: string; created_at: Date }>("SELECT author, body, created_at FROM consensus ORDER BY id DESC LIMIT 1"),
     ]);
-    return { meta, traders, holdings, latest, hourAgo, spark, values, messages, trades };
+    return { meta, traders, holdings, latest, spark, values, messages, trades, memories, research, consensus };
   } catch (err) {
     if ((err as { code?: string }).code === "42P01") return null; // tables not created yet
     throw err;
@@ -68,9 +77,12 @@ function Sparkline({ points }: { points: number[] }) {
   );
 }
 
-function Change({ value }: { value: number }) {
+function Change({ value }: { value: number | null | undefined }) {
+  if (value == null || !Number.isFinite(value)) return <span className="meta">n/a</span>;
   return <span className={value >= 0 ? "up" : "down"}>{pct(value)}</span>;
 }
+
+const BADGE: Partial<Record<Kind, string>> = { trade: "Trade", rejected: "Rejected", research: "Research", memory: "Memory" };
 
 export default async function MarketPage() {
   const data = await load();
@@ -83,7 +95,7 @@ export default async function MarketPage() {
           <p>No traders yet. In a second terminal, from the agent-sandbox folder, run:</p>
           <pre className="code">npm run market</pre>
           <p className="meta">
-            That starts 5 local-model traders with $10,000 of paper money each, trading at live Coinbase prices. This page
+            That starts 5 local-model traders with $10,000 of paper money each, trading at live CoinGecko prices. This page
             updates on its own.
           </p>
         </div>
@@ -93,11 +105,13 @@ export default async function MarketPage() {
 
   const meta = Object.fromEntries(data.meta.rows.map((r) => [r.key, r.value]));
   const coins = (meta.coins ?? "").split(",").filter(Boolean);
-  const live = meta.price_source === "coinbase";
+  const live = meta.price_source === "coingecko";
+  const markets = (meta.markets ? JSON.parse(meta.markets) : {}) as Record<string, MarketRow>;
+  const brief = (meta.brief ? JSON.parse(meta.brief) : null) as Brief | null;
+  const geckoCalls = Number(meta[`coingecko_calls:${new Date().toISOString().slice(0, 7)}`] ?? 0);
   const priceNow = Object.fromEntries(data.latest.rows.map((r) => [r.coin, Number(r.price)]));
   const lastTick = Math.max(...data.latest.rows.map((r) => r.ts.getTime()));
-  const stale = Date.now() - lastTick > 60_000;
-  const priceHourAgo = Object.fromEntries(data.hourAgo.rows.map((r) => [r.coin, Number(r.price)]));
+  const stale = Date.now() - lastTick > 3 * 60_000;
 
   const sparkByCoin = new Map<string, number[]>();
   for (const r of data.spark.rows) sparkByCoin.set(r.coin, [...(sparkByCoin.get(r.coin) ?? []), Number(r.price)]);
@@ -126,6 +140,17 @@ export default async function MarketPage() {
   ];
   const benchmarkNow = bySeries.get("benchmark")?.at(-1)?.v;
   const startUsd = board[0]?.start ?? 10_000;
+  const consensus = data.consensus.rows[0];
+
+  const mind = (name: string) => {
+    const mine = data.memories.rows.filter((m) => m.trader === name);
+    return {
+      reflection: mine.find((m) => m.kind === "reflection"),
+      lessons: mine.filter((m) => m.kind === "lesson").slice(0, 3),
+      notes: mine.filter((m) => m.kind === "note").slice(0, 3),
+      research: data.research.rows.filter((r) => r.trader === name).slice(0, 3),
+    };
+  };
 
   return (
     <div className="wide">
@@ -139,7 +164,7 @@ export default async function MarketPage() {
         </div>
         <div className="feed-status">
           <span className={`pill ${stale ? "warn" : live ? "live" : "sim"}`}>
-            {stale ? "Price feed stopped" : live ? "Live prices from Coinbase" : "Simulated prices"}
+            {stale ? "Price feed stopped" : live ? "Live prices from CoinGecko" : "Simulated prices"}
           </span>
           <span className="meta">
             {stale ? `Last update ${timeAgo(new Date(lastTick))}. Is npm run market running?` : `Updated ${timeAgo(new Date(lastTick))}`}
@@ -151,19 +176,39 @@ export default async function MarketPage() {
       <section className="tickers" aria-label="Prices">
         {coins.map((coin) => {
           const now = priceNow[coin];
-          const ago = priceHourAgo[coin] ?? sparkByCoin.get(coin)?.[0];
+          const points = sparkByCoin.get(coin) ?? [];
+          const change24 = markets[coin]?.ch24h ?? (now && points[0] ? ((now - points[0]) / points[0]) * 100 : null);
           return (
             <div key={coin} className="ticker">
               <div className="ticker-top">
                 <span className="symbol">{coin}</span>
-                {now && ago ? <Change value={((now - ago) / ago) * 100} /> : null}
+                <Change value={change24} />
               </div>
               <div className="ticker-price num">{now ? fmtPrice(now) : "—"}</div>
-              <Sparkline points={thin(sparkByCoin.get(coin) ?? [], 120)} />
-              <div className="meta">1-hour change · last 3 hours</div>
+              <Sparkline points={thin(points, 120)} />
+              <div className="meta">24-hour change · last 24 hours</div>
             </div>
           );
         })}
+      </section>
+
+      <section className="consensus" aria-labelledby="consensus-title">
+        <div className="consensus-head">
+          <h2 id="consensus-title">Group consensus</h2>
+          {consensus && (
+            <span className="meta">
+              {consensus.author} · {timeAgo(consensus.created_at)}
+            </span>
+          )}
+        </div>
+        {consensus ? (
+          <p className="consensus-body">{consensus.body}</p>
+        ) : (
+          <p className="meta">
+            No consensus yet. The floor lead posts one with <code>npm run consensus</code> or the floor-lead skill, and every
+            trader reads it on its next turn.
+          </p>
+        )}
       </section>
 
       <div className="market-grid">
@@ -242,6 +287,59 @@ export default async function MarketPage() {
             <ValueChart series={series} />
           </section>
 
+          <section aria-labelledby="minds-title">
+            <h2 id="minds-title">Memory and research</h2>
+            <div className="minds">
+              {board.map((t) => {
+                const m = mind(t.name);
+                return (
+                  <details key={t.name} className="mind">
+                    <summary>
+                      <span className="swatch" style={{ background: traderColor(t.name) }} />
+                      <strong>{t.name}</strong>
+                      <span className="meta">
+                        {m.reflection ? `memory updated ${timeAgo(m.reflection.created_at)}` : "no long-term memory yet"}
+                        {m.research.length > 0 && ` · last lookup ${timeAgo(m.research[0].created_at)}`}
+                      </span>
+                    </summary>
+                    <div className="mind-body">
+                      <div>
+                        <h3>Long-term memory</h3>
+                        <p>{m.reflection?.body ?? "Written after the trader's first few turns."}</p>
+                      </div>
+                      {m.lessons.length > 0 && (
+                        <div>
+                          <h3>Lessons</h3>
+                          <ul>{m.lessons.map((l, i) => <li key={i}>{l.body}</li>)}</ul>
+                        </div>
+                      )}
+                      {m.notes.length > 0 && (
+                        <div>
+                          <h3>Recent notes</h3>
+                          <ul>{m.notes.map((n, i) => <li key={i}>{n.body} <span className="meta">{timeAgo(n.created_at)}</span></li>)}</ul>
+                        </div>
+                      )}
+                      {m.research.length > 0 && (
+                        <div>
+                          <h3>Research</h3>
+                          <ul className="research">
+                            {m.research.map((r, i) => (
+                              <li key={i}>
+                                <strong>{r.tool}</strong> {r.input && `“${r.input}”`}{" "}
+                                <span className="meta">{timeAgo(r.created_at)}{r.ok ? "" : " · failed"}</span>
+                                <p className="research-result">{r.result.slice(0, 320)}{r.result.length > 320 ? "…" : ""}</p>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </details>
+                );
+              })}
+            </div>
+          </section>
+
           <section aria-labelledby="trades-title">
             <h2 id="trades-title">Latest trades</h2>
             {data.trades.rows.length === 0 ? (
@@ -266,7 +364,7 @@ export default async function MarketPage() {
                           <span className="swatch" style={{ background: traderColor(t.trader) }} />
                           {t.trader}
                         </td>
-                        <td>
+                        <td className="nowrap">
                           <span className={`side ${t.side}`}>{t.side === "buy" ? "Buy" : "Sell"}</span> {fmtUsd(Number(t.usd))} {t.coin}
                         </td>
                         <td className="right num">{fmtPrice(Number(t.price))}</td>
@@ -280,29 +378,95 @@ export default async function MarketPage() {
           </section>
         </div>
 
-        <section className="floor" aria-labelledby="floor-title">
-          <h2 id="floor-title">On the floor</h2>
-          <ol className="feed">
-            {data.messages.rows.map((m) => (
-              <li key={m.id} className={`msg ${m.kind}`}>
-                {m.kind === "system" ? (
-                  <span>{m.body}</span>
-                ) : (
-                  <>
-                    <div className="msg-head">
-                      <span className="swatch" style={{ background: traderColor(m.trader) }} />
-                      <strong>{m.trader}</strong>
-                      {m.kind !== "chat" && <span className={`badge ${m.kind}`}>{m.kind === "trade" ? "Trade" : "Rejected"}</span>}
-                      <span className="meta">{timeAgo(m.created_at)}</span>
+        <aside className="side">
+          <section className="brief" aria-labelledby="brief-title">
+            <h2 id="brief-title">Market brief</h2>
+            {!live ? (
+              <p className="meta">Off in simulated mode. With live prices this shows the Fear &amp; Greed index, trending coins and headlines.</p>
+            ) : !brief ? (
+              <p className="meta">Loading the first brief…</p>
+            ) : (
+              <>
+                {brief.fearGreed && (
+                  <div className="fng">
+                    <span className="fng-value num">{brief.fearGreed.value}</span>
+                    <div>
+                      <strong>{brief.fearGreed.label}</strong>
+                      <div className="meta">Fear &amp; Greed index · 7 days: {brief.fearGreed.history.slice().reverse().join(" → ")}</div>
                     </div>
-                    <p>{m.body}</p>
-                  </>
+                  </div>
                 )}
-              </li>
-            ))}
-          </ol>
-        </section>
+                {brief.trending && brief.trending.length > 0 && (
+                  <p className="trending">
+                    <span className="meta">Trending:</span>{" "}
+                    {brief.trending.map((c) => (
+                      <span key={c.symbol} className="chip">{c.symbol}</span>
+                    ))}
+                  </p>
+                )}
+                {brief.headlines && brief.headlines.length > 0 && (
+                  <ul className="headlines">
+                    {brief.headlines.slice(0, 5).map((h) => (
+                      <li key={h.link}>
+                        <a href={h.link} target="_blank" rel="noopener noreferrer">{h.title}</a>
+                        <div className="meta">{h.source} · {timeAgo(new Date(h.published))}</div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {brief.errors.length > 0 && <p className="meta">Couldn&apos;t load: {brief.errors.join("; ")}</p>}
+                <p className="meta">Updated {timeAgo(new Date(brief.updatedAt))}</p>
+              </>
+            )}
+          </section>
+
+          <section className="floor" aria-labelledby="floor-title">
+            <h2 id="floor-title">On the floor</h2>
+            <ol className="feed">
+              {data.messages.rows.map((m) => (
+                <li key={m.id} className={`msg ${m.kind}`}>
+                  {m.kind === "system" ? (
+                    <span>{m.body}</span>
+                  ) : m.kind === "consensus" ? (
+                    <>
+                      <div className="msg-head">
+                        <span className="badge consensus">Consensus</span>
+                        <strong>{m.trader}</strong>
+                        <span className="meta">{timeAgo(m.created_at)}</span>
+                      </div>
+                      <p>{m.body}</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="msg-head">
+                        <span className="swatch" style={{ background: traderColor(m.trader) }} />
+                        <strong>{m.trader}</strong>
+                        {BADGE[m.kind] && <span className={`badge ${m.kind}`}>{BADGE[m.kind]}</span>}
+                        <span className="meta">{timeAgo(m.created_at)}</span>
+                      </div>
+                      <p>{m.body}</p>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </section>
+        </aside>
       </div>
+
+      <p className="meta attribution">
+        {live ? (
+          <>
+            Price data by{" "}
+            <a href="https://www.coingecko.com/" target="_blank" rel="noopener noreferrer">
+              CoinGecko
+            </a>{" "}
+            · {geckoCalls.toLocaleString()} CoinGecko calls this month (the free Demo plan allows 10,000)
+          </>
+        ) : (
+          "Simulated prices: not real market data."
+        )}
+      </p>
     </div>
   );
 }
